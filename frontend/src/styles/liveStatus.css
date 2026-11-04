@@ -33,40 +33,30 @@
    ========================================================= */
 
 .header {
-  min-height: 52px;
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  padding: 0 2px;
-  color: #1F2937;
+  align-items: center;
+  padding: 20px 30px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
 }
 
 .header-title {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 26px;
-  line-height: 27px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: #1F2937;
 }
 
 .header-subtitle {
-  margin: 2px 0 0 4px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11px;
-  line-height: 11px;
-  font-weight: 700;
-  color: #64748B;
-}
-
-.header-date {
-  margin-top: 12px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: right;
-  color: #64748B;
+  margin: 4px 0 0;
 }
 
 /* =========================================================

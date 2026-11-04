@@ -27,10 +27,19 @@ function Header({ analytics = false }) {
 
   return (
     <header className="header">
-      <div>
-        <h1 className="header-title">SWaMS</h1>
+      <div className="header-brand">
+        <img
+          src="/_Logo.png"
+          alt="SWaMS Logo"
+          className="header-logo"
+        />
 
-        <p className="header-subtitle">Claveria, Misamis Oriental</p>
+        <div>
+          <h1 className="header-title">SWaMS</h1>
+          <p className="header-subtitle">
+            Claveria, Misamis Oriental
+          </p>
+        </div>
       </div>
 
       {!analytics && (
