@@ -3,7 +3,6 @@
    MAIN CONTENT
    ========================================================= */
 
-
 .dashboard-main {
   flex: 1;
   width: 0;
@@ -16,16 +15,8 @@
   flex-direction: column;
   align-items: stretch;
   overflow: hidden;
-
-  background: linear-gradient(
-    108deg,
-    #c4e3e2 0%,
-    #9bcaca 30%,
-    #50afb1 67%,
-    #078f96 100%
-  );
+  background: #F8FAFC;
 }
-
 
 /* Shared width: use the available screen */
 .header,
@@ -47,7 +38,7 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 0 2px;
-  color: #000;
+  color: #1F2937;
 }
 
 .header-title {
@@ -57,6 +48,7 @@
   line-height: 27px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  color: #1F2937;
 }
 
 .header-subtitle {
@@ -65,6 +57,7 @@
   font-size: 11px;
   line-height: 11px;
   font-weight: 700;
+  color: #64748B;
 }
 
 .header-date {
@@ -73,6 +66,7 @@
   font-size: 11px;
   font-weight: 700;
   text-align: right;
+  color: #64748B;
 }
 
 /* =========================================================
@@ -88,8 +82,8 @@
   min-height: 100px;
   box-sizing: border-box;
   padding: 12px;
-  border: 5px solid #002b2c;
-  background: #00a979;
+  border: 5px solid #00865F;
+  background: #00A979;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,17 +97,17 @@
 }
 
 .safe-box.safe-status {
-  background: #00a979;
+  background: #00A979;
   color: #000;
 }
 
 .safe-box.warning-status {
-  background: #f0a51c;
-  color: #17202a;
+  background: #F0A51C;
+  color: #17202A;
 }
 
 .safe-box.danger-status {
-  background: #dc3545;
+  background: #DC3545;
   color: #fff;
 }
 
@@ -139,13 +133,15 @@
   min-height: 90px;
   padding: 10px;
   box-sizing: border-box;
-  background: #003b40;
-  color: #fff;
+  background: #FFFFFF;
+  color: #1F2937;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
 .status-card-title {
@@ -153,6 +149,7 @@
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   font-weight: 700;
+  color: #64748B;
 }
 
 .status-card-value {
@@ -161,6 +158,7 @@
   line-height: 1.15;
   font-weight: 700;
   overflow-wrap: anywhere;
+  color: #1F2937;
 }
 
 .status-card-unit {
@@ -170,18 +168,20 @@
   vertical-align: middle;
 }
 
+/* Sensor status colors */
+
 .status-card.safe {
-  background: #00a979;
+  background: #00A979;
   color: #000;
 }
 
 .status-card.warning {
-  background: #f0a51c;
+  background: #F0A51C;
   color: #000;
 }
 
 .status-card.danger {
-  background: #dc3545;
+  background: #DC3545;
   color: #fff;
 }
 
@@ -207,17 +207,18 @@
 }
 
 /* Separate panel/card for Alerts and Logs */
+
 .panel,
 .analytics-logs,
 .analytics-alerts {
   min-width: 0;
   box-sizing: border-box;
   padding: 14px;
-  background: #003b40;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-  box-shadow: 0 3px 10px rgba(0, 43, 44, 0.12);
+  background: #FFFFFF;
+  color: #1F2937;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .panel {
@@ -241,7 +242,7 @@
   font-size: 13px;
   line-height: 16px;
   font-weight: 700;
-  color: #fff;
+  color: #1F2937;
 }
 
 /* =========================================================
@@ -253,7 +254,7 @@
   flex: 1;
   min-height: 180px;
   box-sizing: border-box;
-  background: #003b40;
+  background: #FFFFFF;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -270,7 +271,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #64748B;
   font-family: "Rajdhani", Arial, sans-serif;
   text-align: center;
 }
@@ -279,10 +280,11 @@
   width: 100%;
   max-width: 220px;
   padding-bottom: 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid #E5E7EB;
   font-size: 24px;
   line-height: 25px;
   font-weight: 700;
+  color: #334155;
 }
 
 .no-alerts-subtitle {
@@ -290,27 +292,28 @@
   font-size: 12px;
   line-height: 16px;
   font-weight: 400;
+  color: #64748B;
 }
 
 .alert-item {
   width: 100%;
   box-sizing: border-box;
   padding: 16px 14px;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  color: #1F2937;
+  border-bottom: 1px solid #E5E7EB;
   border-left: 5px solid transparent;
 }
 
 .alert-item.alert-warning {
-  background: #f0a51c;
-  color: #17202a;
-  border-left-color: #d88700;
+  background: #F0A51C;
+  color: #17202A;
+  border-left-color: #D88700;
 }
 
 .alert-item.alert-danger {
-  background: #dc3545;
+  background: #DC3545;
   color: #fff;
-  border-left-color: #a71d2a;
+  border-left-color: #A71D2A;
 }
 
 .alert-item-header {
@@ -360,6 +363,7 @@
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: auto;
+  background: #FFFFFF;
 }
 
 .logs-table {
@@ -368,8 +372,9 @@
   height: auto;
   border-collapse: collapse;
   table-layout: fixed;
-  color: #fff;
+  color: #1F2937;
   font-family: "Rajdhani", Arial, sans-serif;
+  background: #FFFFFF;
 }
 
 .logs-table th:nth-child(1),
@@ -400,28 +405,29 @@
 .logs-table th {
   height: 36px;
   padding: 6px 4px;
-  background: transparent;
-  color: #fff;
+  background: #F1F5F9;
+  color: #334155;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 10px;
   font-weight: 700;
   text-align: center;
   vertical-align: middle;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
 }
 
 .logs-table td {
   height: 38px;
   padding: 6px 4px;
-  color: #fff;
+  background: #FFFFFF;
+  color: #475569;
   font-size: 11px;
   font-weight: 400;
   text-align: center;
   vertical-align: middle;
   overflow-wrap: anywhere;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
 }
 
 .logs-table th:last-child,
@@ -442,15 +448,15 @@
 }
 
 .status-dot.safe {
-  background: #00b87a;
+  background: #00B87A;
 }
 
 .status-dot.warning {
-  background: #ff9f1a;
+  background: #FF9F1A;
 }
 
 .status-dot.danger {
-  background: #e64b4b;
+  background: #E64B4B;
 }
 
 /* =========================================================
@@ -585,36 +591,140 @@
   }
 }
 
+/* =========================================================
+   LIVE STATUS — WHITE LOGS BACKGROUND
+   ========================================================= */
 
-/* LIVE STATUS — solid logs background */
 .monitoring-panel .logs-table-wrapper {
-  background-color: #005a6c;
+  background-color: #FFFFFF;
   opacity: 1;
 }
 
 .monitoring-panel .logs-table {
-  background-color: #005a6c;
-  color: #fff;
+  background-color: #FFFFFF;
+  color: #1F2937;
 }
 
-/* Keep the logs header and rows fully opaque */
+/* Keep logs header and rows white */
+
 .monitoring-panel .logs-table thead,
 .monitoring-panel .logs-table tbody,
-.monitoring-panel .logs-table tr,
-.monitoring-panel .logs-table th,
+.monitoring-panel .logs-table tr {
+  background-color: #FFFFFF;
+}
+
+.monitoring-panel .logs-table th {
+  background-color: #F1F5F9;
+  color: #334155;
+}
+
 .monitoring-panel .logs-table td {
-  background-color: #005a6c;
-  color: #fff;
+  background-color: #FFFFFF;
+  color: #475569;
 }
 
 /* Match Analytics log dividers */
+
 .monitoring-panel .logs-table th,
 .monitoring-panel .logs-table td {
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: 1px solid #E2E8F0;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .monitoring-panel .logs-table th:last-child,
 .monitoring-panel .logs-table td:last-child {
   border-right: none;
+}
+
+
+/* =========================================================
+   SOFT SENSOR STATUS COLORS
+   ========================================================= */
+
+/* Overall Status Banner */
+
+.safe-box.safe-status {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+.safe-box.warning-status {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
+}
+
+.safe-box.danger-status {
+  background: #FEE2E2;
+  color: #991B1B;
+  border-color: #FCA5A5;
+}
+
+.safe-box.unknown-status {
+  background: #F1F5F9;
+  color: #475569;
+  border-color: #CBD5E1;
+}
+
+
+/* Sensor Cards */
+
+.status-card.safe {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+.status-card.warning {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
+}
+
+.status-card.danger {
+  background: #FEE2E2;
+  color: #991B1B;
+  border-color: #FCA5A5;
+}
+
+.status-card.not-evaluated {
+  background: #F1F5F9;
+  color: #475569;
+  border-color: #CBD5E1;
+}
+
+
+/* =========================================================
+   SOFT ALERT COLORS
+   ========================================================= */
+
+.alert-item.alert-warning {
+  background: #FFFBEB;
+  color: #92400E;
+  border-left-color: #F59E0B;
+}
+
+.alert-item.alert-danger {
+  background: #FEF2F2;
+  color: #991B1B;
+  border-left-color: #EF4444;
+}
+
+
+/* =========================================================
+   STATUS INDICATORS
+   Keep dots slightly stronger for visibility
+   ========================================================= */
+
+.status-dot.safe {
+  background: #16A34A;
+}
+
+.status-dot.warning {
+  background: #D97706;
+}
+
+.status-dot.danger {
+  background: #DC2626;
 }

@@ -1,3 +1,4 @@
+
 /* =========================================================
    SIDEBAR
    ========================================================= */
@@ -7,7 +8,8 @@
   min-width: 129px;
   min-height: 100vh;
 
-  background: #00566a;
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
 
   display: flex;
   flex-direction: column;
@@ -16,7 +18,7 @@
 }
 
 
-/* Top teal block */
+/* Top logo block */
 
 .sidebar-logo {
   width: 100%;
@@ -29,8 +31,8 @@
   justify-content: center;
 
   padding: 10px;
-  background: #078d98;
-  border-bottom: 2px solid #e6ffff;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
 
   overflow: hidden;
 }
@@ -44,6 +46,7 @@
 
   object-fit: contain;
 }
+
 
 /* Navigation */
 
@@ -67,7 +70,7 @@
 
   padding: 0 10px;
 
-  color: #fff;
+  color: #475569;
 
   text-decoration: none;
 
@@ -78,23 +81,25 @@
 
   text-align: center;
 
-  background: #00566a;
+  background: #FFFFFF;
 
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 
 .sidebar-link:hover {
-  background: #09677a;
+  background: #F1F5F9;
+  color: #078D98;
 }
 
 
 /* Active page */
 
 .sidebar-link.active {
-  background: #59a9ad;
+  background: #E6F4F4;
+  color: #078D98;
 
-  color: #fff;
+  border-right: 3px solid #078D98;
 }
 
 

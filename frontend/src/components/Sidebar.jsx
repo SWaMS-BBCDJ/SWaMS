@@ -5,7 +5,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <img src="/SWaMS_Logo.png" alt="WQM Logo" />
+        <img src="/_Logo.png" alt="WQM Logo" />
       </div>
 
       <nav className="sidebar-nav">

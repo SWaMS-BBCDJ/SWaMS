@@ -1,6 +1,7 @@
+
 /* =========================================================
    WATER QUALITY MONITORING DASHBOARD
-   Figma-matched styling
+   White Theme Styling
    ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap");
@@ -25,6 +26,6 @@ body,
 
 body {
   font-family: "Rajdhani", Arial, sans-serif;
-  background: #000;
-  color: #000;
+  background: #F8FAFC;
+  color: #1F2937;
 }

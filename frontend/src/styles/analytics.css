@@ -18,7 +18,7 @@
   max-width: none;
   height: 36px;
   flex-shrink: 0;
-  margin: 0 0 1px; /* Reduced bottom gap from 6px */
+  margin: 0 0 1px;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -26,7 +26,10 @@
   box-sizing: border-box;
 }
 
-/* Date filter */
+/* =========================================================
+   DATE FILTER
+   ========================================================= */
+
 .date-filter {
   display: flex;
   align-items: center;
@@ -37,27 +40,48 @@
 
 .date-filter label {
   font-size: 14px;
-  color: #000;
+  color: #334155;
 }
 
 .date-filter input {
   height: 34px;
   padding: 4px 8px;
-  border: 1px solid #b7d6d6;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.8);
-  color: #000;
+  border: 1px solid #D1D5DB;
+  border-radius: 5px;
+  background: #FFFFFF;
+  color: #1F2937;
   font-family: Arial, Helvetica, sans-serif;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.date-filter input:focus {
+  outline: none;
+  border-color: #078D98;
+  box-shadow: 0 0 0 3px rgba(7, 141, 152, 0.12);
 }
 
 .date-filter button {
   height: 34px;
   padding: 0 12px;
-  border: 1px solid #003b40;
-  border-radius: 4px;
-  background: #9bcaca;
-  color: #000;
+  border: 1px solid #078D98;
+  border-radius: 5px;
+  background: #078D98;
+  color: #FFFFFF;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-filter button:hover {
+  background: #066F78;
+  border-color: #066F78;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(7, 141, 152, 0.2);
+}
+
+.date-filter button:active {
+  transform: scale(0.97);
+  box-shadow: none;
 }
 
 /* =========================================================
@@ -104,9 +128,11 @@
 
   position: relative;
 
-  border: 2px solid #003b40;
-  border-radius: 5px;
-  background: rgba(185, 213, 214, 0.65);
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background: #FFFFFF;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   overflow: hidden;
 }
@@ -131,7 +157,7 @@
 
   max-width: 125px;
 
-  color: #000;
+  color: #334155;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
   line-height: 20px;
@@ -164,9 +190,11 @@
   display: flex;
   flex-direction: column;
 
-  background: #00566a;
-  border: 2px solid #003b40;
-  border-radius: 5px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   overflow: hidden;
 }
@@ -181,6 +209,7 @@
   justify-content: center;
 
   padding: 8px;
+  background: #FFFFFF;
 }
 
 .analytics-logs .panel-title {
@@ -191,9 +220,11 @@
   font-size: 18px;
   font-weight: 700;
   text-align: center;
+  color: #1F2937;
 }
 
 /* Only the table wrapper scrolls */
+
 .analytics-logs .logs-table-wrapper {
   flex: 1;
   min-width: 0;
@@ -203,9 +234,11 @@
 
   margin: 0;
 
+  background: #FFFFFF;
+
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #9bcaca #00566a;
+  scrollbar-color: #CBD5E1 #F8FAFC;
 }
 
 .analytics-logs .logs-table {
@@ -215,7 +248,9 @@
   border-collapse: collapse;
   table-layout: fixed;
 
-  color: white;
+  color: #475569;
+  background: #FFFFFF;
+
   font-family: "Rajdhani", Arial, sans-serif;
   font-size: 11px;
 }
@@ -228,27 +263,37 @@
   height: 40px;
   padding: 6px 4px;
 
-  background: #00566a;
-  color: white;
+  background: #F1F5F9;
+  color: #334155;
 
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-align: center;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
 }
 
 .analytics-logs .logs-table td {
   height: 44px;
   padding: 6px 4px;
 
-  color: white;
+  background: #FFFFFF;
+  color: #475569;
+
   font-size: 11px;
   text-align: center;
 
   overflow-wrap: anywhere;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
+}
+
+.analytics-logs .logs-table th:last-child,
+.analytics-logs .logs-table td:last-child {
+  border-right: none;
 }
 
 /* =========================================================
@@ -268,9 +313,11 @@
   display: flex;
   flex-direction: column;
 
-  background: #920d20;
-  border: 2px solid #003b40;
-  border-radius: 5px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   overflow: hidden;
 }
@@ -285,6 +332,7 @@
   justify-content: center;
 
   padding: 8px;
+  background: #FFFFFF;
 }
 
 .analytics-alerts .panel-title {
@@ -293,9 +341,11 @@
   font-size: 18px;
   font-weight: 700;
   text-align: center;
+  color: #1F2937;
 }
 
 /* Only the alert content scrolls */
+
 .analytics-alerts .alert-list {
   flex: 1;
   min-width: 0;
@@ -306,13 +356,13 @@
   display: flex;
   flex-direction: column;
 
-  background: transparent;
+  background: #FFFFFF;
 
   overflow-y: auto;
   overflow-x: hidden;
 
   scrollbar-width: thin;
-  scrollbar-color: #e8a1a9 #920d20;
+  scrollbar-color: #CBD5E1 #F8FAFC;
 }
 
 .analytics-alerts .alert-item {
@@ -320,9 +370,13 @@
   width: 100%;
   padding: 16px 12px;
 
-  color: white;
+  background: #FFFFFF;
+  color: #1F2937;
+
   overflow-wrap: anywhere;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+
+  border-bottom: 1px solid #E5E7EB;
+  border-left: 4px solid transparent;
 }
 
 .analytics-alerts .alert-item-header {
@@ -335,22 +389,51 @@
 .analytics-alerts .alert-value {
   font-size: 14px;
   font-weight: 700;
+  color: #1F2937;
 }
 
 .analytics-alerts .alert-message {
   margin: 8px 0 0;
   font-size: 12px;
+  color: #475569;
 }
 
 .analytics-alerts .alert-time {
   margin-top: 7px;
   font-size: 10px;
+  color: #64748B;
+}
+
+/* Preserve warning and danger alert colors */
+
+.analytics-alerts .alert-item.alert-warning {
+  background: #FFF7E6;
+  color: #92400E;
+  border-left-color: #F0A51C;
+}
+
+.analytics-alerts .alert-item.alert-danger {
+  background: #FEF2F2;
+  color: #991B1B;
+  border-left-color: #DC3545;
+}
+
+.analytics-alerts .alert-item.alert-warning .alert-parameter,
+.analytics-alerts .alert-item.alert-warning .alert-value,
+.analytics-alerts .alert-item.alert-warning .alert-message,
+.analytics-alerts .alert-item.alert-warning .alert-time,
+.analytics-alerts .alert-item.alert-danger .alert-parameter,
+.analytics-alerts .alert-item.alert-danger .alert-value,
+.analytics-alerts .alert-item.alert-danger .alert-message,
+.analytics-alerts .alert-item.alert-danger .alert-time {
+  color: inherit;
 }
 
 .analytics-alerts .no-alerts {
   flex: 1;
   min-height: 100%;
   display: flex;
+  color: #64748B;
 }
 
 /* =========================================================
