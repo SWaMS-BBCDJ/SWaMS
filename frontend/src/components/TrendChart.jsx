@@ -226,8 +226,8 @@ function TrendChart({
 
           <polyline
             points={points}
-            fill="none"
-            stroke="#00576a"
+            fill="#28734D"
+            stroke="#E5EDE7"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

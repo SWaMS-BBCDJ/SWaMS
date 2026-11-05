@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-function Header({ analytics = false }) {
+function Header() {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -42,11 +42,9 @@ function Header({ analytics = false }) {
         </div>
       </div>
 
-      {!analytics && (
-        <div className="header-date">
-          <p>{today} | {currentTime}</p>
-        </div>
-      )}
+      <div className="header-date">
+        <p>{today} | {currentTime}</p>
+      </div>
     </header>
   );
 }

@@ -6,9 +6,7 @@ import App from "./App.jsx";
 
 import "./styles/global.css";
 import "./App.css";
-import "./styles/sidebar.css";
-import "./styles/liveStatus.css";
-import "./styles/analytics.css";
+import "./styles/Dashboard.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
