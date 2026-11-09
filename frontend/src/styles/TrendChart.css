@@ -1,0 +1,197 @@
+/* =========================================================
+   TREND CHART (sensor chart section, selector, chart panel)
+   Import in components/TrendChart.jsx:
+   import "../styles/TrendChart.css";
+   ========================================================= */
+
+.sensor-chart-section {
+  width: 100%;
+  min-width: 0;
+  min-height: 420px;
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sensor-chart-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sensor-chart-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Sensor selector */
+
+.sensor-selector {
+  width: fit-content;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  background: #F1F5F9;
+  border-radius: 9px;
+}
+
+.sensor-selector button {
+  min-height: 36px;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sensor-selector button:hover {
+  color: var(--primary);
+  background: #FFFFFF;
+}
+
+.sensor-selector button.active {
+  color: #FFFFFF;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(40, 115, 77, 0.2);
+}
+
+/* Chart itself */
+
+.sensor-charts-column .chart-panel {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 310px;
+  height: 100%;
+  flex: 1;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sensor-charts-column .chart-label {
+  position: static;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  padding: 14px 16px 5px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.sensor-charts-column .chart-graph {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  flex: 1;
+  padding: 8px 12px 14px;
+  background: #FFFFFF;
+}
+
+.sensor-charts-column .trend-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sensor-charts-column .chart-no-data {
+  min-height: 250px;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+/* Large screens */
+@media (min-width: 1500px) {
+  .sensor-chart-section {
+    min-height: 470px;
+    padding: 24px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1000px) {
+  .sensor-chart-section {
+    padding: 14px;
+  }
+}
+
+/* Small tablets and mobile */
+@media (max-width: 700px) {
+  .sensor-chart-section {
+    min-height: 390px;
+  }
+
+  .sensor-chart-header {
+    gap: 13px;
+  }
+
+  .sensor-selector {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sensor-selector button {
+    padding: 0 7px;
+    font-size: 11px;
+  }
+
+  .sensor-charts-column .chart-panel {
+    min-height: 270px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 420px) {
+  .sensor-chart-section {
+    padding: 12px;
+    min-height: 360px;
+  }
+
+  .sensor-chart-heading p {
+    font-size: 11px;
+  }
+
+  .sensor-selector button {
+    min-height: 34px;
+    font-size: 10px;
+  }
+
+  .sensor-charts-column .chart-panel {
+    min-height: 245px;
+  }
+}

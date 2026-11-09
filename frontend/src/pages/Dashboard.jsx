@@ -8,10 +8,12 @@ import Alerts from "../components/Alerts";
 import LogsTable from "../components/LogsTable";
 import DateFilter from "../components/DateFilter";
 import TrendChart from "../components/TrendChart";
-
 import "../styles/Dashboard.css";
+import LatestReading from "../components/LatestReading";
 
-const API_URL = "http://localhost:3000/api/readings?limit=1000";
+import "../styles/index.css";
+
+const API_URL = "http://localhost:5000/api/readings/history";
 
 /* =========================================================
    DATE FUNCTIONS
@@ -210,9 +212,11 @@ function Dashboard() {
             ...r,
 
             recordedAt:
+              r.t ??
+              r.timestamp ??
               r.recordedAt ??
+              r.recorded_at ?? 
               r.created_at ??
-              r.recorded_at ??
               null,
           }))
         );
@@ -251,7 +255,9 @@ function Dashboard() {
      Always displays the newest sensor reading.
      ======================================================= */
 
-  const latestReading = readings[0] ?? null;
+  const latestReading = readings.length
+    ? readings[readings.length - 1]
+    : null;
 
   /* =======================================================
      DATE-FILTERED READINGS
@@ -282,7 +288,7 @@ function Dashboard() {
 
   const latestLogs = useMemo(() => {
 
-    return filteredReadings.slice(0, 5);
+    return filteredReadings.slice(-5).reverse();
 
   }, [filteredReadings]);
 
@@ -406,43 +412,53 @@ function Dashboard() {
 
         {/* OVERALL WATER QUALITY STATUS */}
 
-        <StatusBanner status={overallStatus} />
+        <div className="status-summary-grid">
+          <StatusBanner status={overallStatus} />
+
+          <LatestReading reading={latestReading} />
+        </div>
 
         {/* SENSOR METRIC CARDS */}
 
-        <section className="status-grid">
+        <section className="live-readings">
 
-          <MetricCard
-            title="PH"
-            value={
-              latestReading?.ph == null
-                ? "--"
-                : Number(latestReading.ph).toFixed(2)
-            }
-            status={phStatus}
-          />
+                <h2 className="section-heading">LIVE SENSOR READINGS</h2>
 
-          <MetricCard
-            title="TEMPERATURE"
-            value={
-              latestReading?.temperature == null
-                ? "--"
-                : Number(latestReading.temperature).toFixed(1)
-            }
-            unit="°C"
-            status={temperatureStatus}
-          />
+          <div className="status-grid">
 
-          <MetricCard
-            title="TURBIDITY"
-            value={
-              latestReading?.turbidity == null
-                ? "--"
-                : Number(latestReading.turbidity).toFixed(1)
-            }
-            unit="NTU"
-            status={turbidityStatus}
-          />
+            <MetricCard
+              title="PH"
+              value={
+                latestReading?.ph == null
+                  ? "--"
+                  : Number(latestReading.ph).toFixed(2)
+              }
+              status={phStatus}
+            />
+
+            <MetricCard
+              title="TEMPERATURE"
+              value={
+                latestReading?.temperature == null
+                  ? "--"
+                  : Number(latestReading.temperature).toFixed(1)
+              }
+              unit="°C"
+              status={temperatureStatus}
+            />
+
+            <MetricCard
+              title="TURBIDITY"
+              value={
+                latestReading?.turbidity == null
+                  ? "--"
+                  : Number(latestReading.turbidity).toFixed(1)
+              }
+              unit="NTU"
+              status={turbidityStatus}
+            />
+
+          </div>
 
         </section>
 
@@ -485,7 +501,7 @@ function Dashboard() {
 
                 <div className="sensor-chart-heading">
 
-                  <h2>SENSOR READINGS</h2>
+                  <h2>HISTORICAL READINGS</h2>
 
                   <p>
                     Monitor historical water quality measurements

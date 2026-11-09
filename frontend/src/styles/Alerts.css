@@ -1,0 +1,167 @@
+/* =========================================================
+   ALERTS (compact, grouped)
+   Import in components/Alerts.jsx:  import "../styles/Alerts.css";
+   ========================================================= */
+
+.monitoring-column .alert-list,
+.dashboard-alerts-panel .alert-list {
+  width: 100%;
+  min-height: 0;
+  height: 0;
+  flex: 1 1 0;
+  margin-top: 6px;
+  padding-right: 5px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #FFFFFF;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 #F8FAFC;
+}
+
+/* ---------- One group: time LEFT | alerts RIGHT ---------- */
+
+.alert-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 9px;
+  padding: 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+/* LEFT: date + time stacked */
+.alert-group-time {
+  flex: 0 0 78px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 4px;
+}
+
+.alert-group-date,
+.alert-group-clock {
+  display: block;
+  color: #475569;          /* same as the Logs table text */
+  font-size: 11px;         /* same as the Logs table text */
+  font-weight: 400;        /* not bold */
+  font-variant-numeric: tabular-nums;
+}
+
+/* RIGHT: count + alert items */
+.alert-group-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ---------- Alert items ---------- */
+
+.alert-item {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 7px 9px;
+  margin-bottom: 5px;
+  color: #1F2937;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-left: 4px solid transparent;
+  border-radius: 6px;
+}
+
+.alert-item:last-child {
+  margin-bottom: 0;
+}
+
+.alert-item.alert-warning {
+  background: #FFFFFF;
+  color: #92400E;
+  border-left-color: #F59E0B;
+}
+
+.alert-item.alert-danger {
+  background: #FFFFFF;
+  color: #991B1B;
+  border-left-color: #EF4444;
+}
+
+.alert-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.alert-parameter,
+.alert-value {
+  font-size: 13px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.alert-message {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* ---------- Empty alerts ---------- */
+
+.no-alerts {
+  width: 100%;
+  min-height: 160px;
+  flex: 1;
+  padding: 18px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.no-alerts-main {
+  width: 100%;
+  max-width: 240px;
+  padding-bottom: 12px;
+  color: #334155;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+  border-bottom: 1px solid var(--border);
+}
+
+.no-alerts-subtitle {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 420px) {
+  .alert-group {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .alert-group-time {
+    flex: none;
+    padding-top: 0;
+  }
+}

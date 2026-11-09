@@ -1,0 +1,113 @@
+/* =========================================================
+   DATE FILTER
+   Import in components/DateFilter.jsx:
+   import "../styles/DateFilter.css";
+   ========================================================= */
+
+.date-filter {
+  width: 100%;
+  min-width: 0;
+  padding: 15px 18px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.date-filter label {
+  color: #1F2937;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.date-filter input {
+  height: 38px;
+  min-width: 145px;
+  padding: 0 11px;
+  background: #F8FAFC;
+  color: #1F2937;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  font-size: 12px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.date-filter input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(40, 115, 77, 0.12);
+}
+
+.date-filter button {
+  min-height: 38px;
+  padding: 0 18px;
+  background: var(--primary);
+  color: #FFFFFF;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.date-filter button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.clear-filter-button {
+  align-self: flex-start;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clear-filter-button:hover {
+  background: var(--primary-light);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .date-filter {
+    padding: 13px;
+    gap: 9px;
+  }
+
+  .date-filter input {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 420px) {
+  .date-filter {
+    align-items: stretch;
+  }
+
+  .date-filter label {
+    width: 100%;
+  }
+
+  .date-filter input {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .date-filter button {
+    width: 100%;
+  }
+}

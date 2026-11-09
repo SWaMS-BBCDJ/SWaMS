@@ -1,31 +1,107 @@
-
 /* =========================================================
-   WATER QUALITY MONITORING DASHBOARD
-   White Theme Styling
+   SWaMS - GLOBAL STYLES
+   Import ONCE in main.jsx:  import "./styles/global.css";
    ========================================================= */
 
-@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap");
-
-
-/* =========================================================
-   RESET
-   ========================================================= */
+:root {
+  --primary: #28734D;
+  --primary-dark: #195638;
+  --primary-light: #E8F3EC;
+  --background: #D2DFE4;
+  --surface: #FFFFFF;
+  --text: #1F2937;
+  --muted: #64748B;
+  --border: #E2E8F0;
+  --shadow: 0 4px 16px rgba(15, 23, 42, 0.055);
+  --radius: 12px;
+  --section-title-size: 15px;
+}
 
 * {
   box-sizing: border-box;
 }
 
+/* Entire dashboard background */
 html,
 body,
-#root {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
+#root,
+.app,
+.dashboard-main {
+  background: var(--background) !important;
+  color: #1F2937 !important;
 }
 
-body {
-  font-family: "Rajdhani", Arial, sans-serif;
-  background: #F8FAFC;
+.app {
+  width: 100%;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  transition: background 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(40, 115, 77, 0.22);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   UNIFORM SECTION TITLES
+   LIVE SENSOR READINGS / SENSOR READINGS / LOGS / ALERTS
+   Change --section-title-size in :root to resize all four.
+   ========================================================= */
+
+.section-heading,
+.live-title,
+.sensor-chart-heading h2,
+.monitoring-column .panel-title {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--section-title-size);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   SHARED WHITE PANEL LOOK
+   (also used on the analytics page)
+   ========================================================= */
+
+.panel,
+.analytics-logs,
+.analytics-alerts {
+  background: #FFFFFF;
   color: #1F2937;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* =========================================================
+   ANALYTICS PAGE COMPATIBILITY
+   ========================================================= */
+
+.analytics-header,
+.analytics-grid {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.analytics-grid > * {
+  min-width: 0;
+}
+
+.analytics-logs,
+.analytics-alerts {
+  min-width: 0;
+  padding: 14px;
 }

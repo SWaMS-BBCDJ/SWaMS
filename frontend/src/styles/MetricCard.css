@@ -1,0 +1,80 @@
+/* =========================================================
+   SENSOR METRIC CARDS (white card, colored left accent)
+   Import in components/MetricCard.jsx:
+   import "../styles/MetricCard.css";
+   ========================================================= */
+
+.status-card {
+  position: relative;
+  min-width: 0;
+  min-height: 125px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  background: #FFFFFF;
+  color: #1F2937;
+  border: 1px solid var(--border);
+  border-left: 10px solid #CBD5E1;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09);
+}
+
+.status-card.safe          { border-left-color: #16A34A; }
+.status-card.warning       { border-left-color: #D97706; }
+.status-card.danger        { border-left-color: #DC2626; }
+.status-card.not-evaluated { border-left-color: #94A3B8; }
+
+.status-card-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.status-card-value {
+  color: #1F2937;
+  font-size: clamp(27px, 3vw, 36px);
+  line-height: 1.2;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.status-card-unit {
+  margin-left: 5px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .status-card {
+    min-height: 105px;
+  }
+
+  .status-card-title {
+    font-size: 10px;
+  }
+
+  .status-card-value {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 420px) {
+  .status-card {
+    min-height: 85px;
+  }
+}

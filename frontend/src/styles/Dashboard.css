@@ -1,32 +1,8 @@
-
 /* =========================================================
-   SWaMS - MODERN LIVE STATUS DASHBOARD
+   SWaMS - DASHBOARD PAGE LAYOUT
+   Import in pages/Dashboard.jsx:  import "../styles/Dashboard.css";
+   Only page-level layout lives here (grids, spacing, panels).
    ========================================================= */
-
-:root {
-  --primary: #28734D;
-  --primary-dark: #195638;
-  --primary-light: #E8F3EC;
-  --background: #F3F7F5;
-  --surface: #FFFFFF;
-  --text: #1F2937;
-  --muted: #64748B;
-  --border: #E2E8F0;
-  --shadow: 0 4px 16px rgba(15, 23, 42, 0.055);
-  --radius: 12px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.app {
-  width: 100%;
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
-}
 
 /* =========================================================
    MAIN DASHBOARD
@@ -45,133 +21,47 @@
 }
 
 /* =========================================================
-   HEADER
-   ========================================================= */
-
-.header {
-  width: 100%;
-  min-height: 86px;
-  padding: 12px 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-
-.header-logo {
-  width: 58px;
-  height: 58px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.header-title {
-  margin: 0;
-  color: var(--primary-dark);
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
-}
-
-.header-subtitle {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.header-date {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* =========================================================
    LOADING, ERROR AND EMPTY MESSAGES
    ========================================================= */
 
-.dashboard-main > p[role="alert"],
 .dashboard-main > p {
   margin: 0;
   padding: 13px 16px;
+  background: #FFFFFF !important;
+  color: var(--muted) !important;
   border: 1px solid var(--border);
   border-radius: 9px;
-  background: var(--surface);
-  color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .dashboard-main > p[role="alert"] {
-  background: #FEF2F2;
+  background: #FEF2F2 !important;
+  color: #991B1B !important;
   border-color: #FECACA;
-  color: #991B1B;
 }
 
 /* =========================================================
-   OVERALL WATER QUALITY STATUS
+   STATUS SUMMARY GRID - OVERALL STATUS + LATEST READING
    ========================================================= */
 
-.safe-container {
+.status-summary-grid {
   width: 100%;
-  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
 
-.safe-box {
-  width: 100%;
-  min-height: 112px;
-  padding: 20px;
+/* =========================================================
+   LIVE READINGS LAYOUT (holds the metric cards)
+   ========================================================= */
+
+.live-readings {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid transparent;
-  border-radius: 14px;
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 800;
-  letter-spacing: 4px;
-  text-align: center;
-  overflow-wrap: anywhere;
-  box-shadow: var(--shadow);
+  flex-direction: column;
+  gap: 12px;
 }
-
-.safe-box.safe-status {
-  background: #DCFCE7;
-  color: #166534;
-  border-color: #86EFAC;
-}
-
-.safe-box.warning-status {
-  background: #FEF3C7;
-  color: #92400E;
-  border-color: #FCD34D;
-}
-
-.safe-box.danger-status {
-  background: #FEE2E2;
-  color: #991B1B;
-  border-color: #FCA5A5;
-}
-
-.safe-box.unknown-status {
-  background: #F1F5F9;
-  color: #475569;
-  border-color: #CBD5E1;
-}
-
-/* =========================================================
-   SENSOR METRIC CARDS
-   ========================================================= */
 
 .status-grid {
   width: 100%;
@@ -181,174 +71,21 @@
   margin: 0;
 }
 
-.status-card {
-  position: relative;
-  min-width: 0;
-  min-height: 135px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 9px;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.status-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.09);
-}
-
-.status-card-title {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.status-card-value {
-  color: var(--text);
-  font-size: clamp(27px, 3vw, 36px);
-  line-height: 1.2;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.status-card-unit {
-  margin-left: 5px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.status-card.safe {
-  background: #F0FDF4;
-  color: #166534;
-  border-color: #BBF7D0;
-}
-
-.status-card.warning {
-  background: #FFFBEB;
-  color: #92400E;
-  border-color: #FDE68A;
-}
-
-.status-card.danger {
-  background: #FEF2F2;
-  color: #991B1B;
-  border-color: #FECACA;
-}
-
-.status-card.not-evaluated {
-  background: #F8FAFC;
-  color: #475569;
-  border-color: #CBD5E1;
-}
-
-.status-card.safe .status-card-value,
-.status-card.safe .status-card-title {
-  color: #166534;
-}
-
-.status-card.warning .status-card-value,
-.status-card.warning .status-card-title {
-  color: #92400E;
-}
-
-.status-card.danger .status-card-value,
-.status-card.danger .status-card-title {
-  color: #991B1B;
-}
-
-.status-card.not-evaluated .status-card-value {
-  color: #475569;
-}
-
 /* =========================================================
-   DATE FILTER
-   ========================================================= */
-
-.date-filter {
-  width: 100%;
-  min-width: 0;
-  padding: 15px 18px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.date-filter label {
-  color: #475569;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.date-filter input {
-  height: 38px;
-  min-width: 145px;
-  padding: 0 11px;
-  background: #F8FAFC;
-  color: var(--text);
-  border: 1px solid #CBD5E1;
-  border-radius: 7px;
-  font-size: 12px;
-  outline: none;
-  transition: 0.2s ease;
-}
-
-.date-filter input:focus {
-  background: #FFFFFF;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(40, 115, 77, 0.12);
-}
-
-.date-filter button {
-  min-height: 38px;
-  padding: 0 18px;
-  background: var(--primary);
-  color: #FFFFFF;
-  border: 1px solid var(--primary);
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.date-filter button:hover {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   MAIN DASHBOARD CONTENT
-   Charts LEFT | Logs and Alerts RIGHT
+   MAIN CONTENT GRID - Charts LEFT | Logs and Alerts RIGHT
    ========================================================= */
 
 .dashboard-content-grid {
   width: 100%;
   min-width: 0;
+  margin: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 14px;
   align-items: stretch;
-  gap: 18px;
-  margin: 0;
 }
 
-/* =========================================================
-   LEFT COLUMN - SENSOR CHART
-   ========================================================= */
+/* LEFT COLUMN */
 
 .sensor-charts-column {
   min-width: 0;
@@ -358,1089 +95,105 @@
 }
 
 .section-heading {
-  margin: 0;
   padding: 0 2px;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-/* Chart container */
-
-.sensor-chart-section {
-  width: 100%;
-  min-width: 0;
-  min-height: 420px;
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.sensor-chart-header {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sensor-chart-heading h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 19px;
-  font-weight: 800;
-}
-
-.sensor-chart-heading p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-/* Horizontal sensor selector */
-
-.sensor-selector {
-  width: fit-content;
-  max-width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  padding: 5px;
-  background: #F1F5F9;
-  border-radius: 9px;
-}
-
-.sensor-selector button {
-  min-height: 36px;
-  padding: 0 16px;
-  background: transparent;
-  color: #64748B;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sensor-selector button:hover {
-  color: var(--primary);
-  background: #FFFFFF;
-}
-
-.sensor-selector button.active {
-  color: #FFFFFF;
-  background: var(--primary);
-  border-color: var(--primary);
-  box-shadow: 0 2px 6px rgba(40, 115, 77, 0.2);
-}
-
-/* Chart itself */
-
-.sensor-charts-column .chart-panel {
-  position: relative;
-  width: 100%;
-  min-width: 0;
-  min-height: 310px;
-  height: 100%;
-  flex: 1;
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  background: #FFFFFF;
-  border: 1px solid #EDF1EE;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.sensor-charts-column .chart-label {
-  position: static;
-  transform: none;
-  width: 100%;
-  max-width: none;
-  padding: 14px 16px 5px;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-.sensor-charts-column .chart-graph {
-  width: 100%;
-  min-height: 0;
-  flex: 1;
-  padding: 8px 12px 14px;
-}
-
-.sensor-charts-column .trend-chart {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.sensor-charts-column .chart-no-data {
-  min-height: 250px;
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #94A3B8;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 /* =========================================================
-   RIGHT COLUMN - LOGS AND ALERTS
+   RIGHT COLUMN - LOGS AND ALERTS PANELS
    ========================================================= */
 
 .monitoring-column {
   min-width: 0;
+  min-height: 0;
   display: grid;
-  grid-template-rows: minmax(300px, 1.15fr) minmax(230px, 0.85fr);
-  gap: 16px;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
 }
 
 .monitoring-column .panel {
   width: 100%;
   min-width: 0;
   min-height: 0;
-  padding: 16px;
+  height: 320px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
 .monitoring-column .panel-header {
-  min-height: 42px;
-  flex-shrink: 0;
-  padding: 0 2px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-}
-
-.monitoring-column .panel-title {
+  min-height: 38px;
   margin: 0;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-
-/* =========================================================
-   LOGS TABLE
-   ========================================================= */
-
-.monitoring-column .logs-table-wrapper {
-  width: 100%;
-  height: 0;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  margin-top: 10px;
-  overflow: auto;
-  background: #FFFFFF;
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 #F8FAFC;
-}
-
-.logs-table {
-  width: 100%;
-  min-width: 420px;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-  background: #FFFFFF;
-  color: #475569;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.logs-table th:nth-child(1),
-.logs-table td:nth-child(1) {
-  width: 23%;
-}
-
-.logs-table th:nth-child(2),
-.logs-table td:nth-child(2) {
-  width: 13%;
-}
-
-.logs-table th:nth-child(3),
-.logs-table td:nth-child(3) {
-  width: 14%;
-}
-
-.logs-table th:nth-child(4),
-.logs-table td:nth-child(4) {
-  width: 25%;
-}
-
-.logs-table th:nth-child(5),
-.logs-table td:nth-child(5) {
-  width: 25%;
-}
-
-.logs-table th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  height: 42px;
-  padding: 8px 5px;
-  background: #F1F5F9;
-  color: #334155;
-  font-size: 10px;
-  font-weight: 800;
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-}
-
-.logs-table td {
-  height: 44px;
-  padding: 8px 5px;
-  background: #FFFFFF;
-  color: #475569;
-  font-size: 11px;
-  text-align: center;
-  vertical-align: middle;
-  overflow-wrap: anywhere;
-  border-bottom: 1px solid #EDF1F5;
-  border-right: 1px solid #EDF1F5;
-}
-
-.logs-table tbody tr:hover td {
-  background: #F8FAFC;
-}
-
-.logs-table th:last-child,
-.logs-table td:last-child {
-  border-right: none;
-}
-
-/* =========================================================
-   LOG STATUS DOTS
-   ========================================================= */
-
-.status-dot {
-  width: 11px;
-  height: 11px;
-  display: inline-block;
-  border-radius: 50%;
-  vertical-align: middle;
-}
-
-.status-dot.safe {
-  background: #16A34A;
-  box-shadow: 0 0 0 3px #DCFCE7;
-}
-
-.status-dot.warning {
-  background: #D97706;
-  box-shadow: 0 0 0 3px #FEF3C7;
-}
-
-.status-dot.danger {
-  background: #DC2626;
-  box-shadow: 0 0 0 3px #FEE2E2;
-}
-
-/* =========================================================
-   ALERTS
-   ========================================================= */
-
-.monitoring-column .alert-list {
-  width: 100%;
-  height: 0;
-  min-height: 0;
-  flex: 1;
-  margin-top: 10px;
+  padding: 0 2px 8px;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #FFFFFF;
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 #F8FAFC;
-}
-
-.alert-item {
-  width: 100%;
-  flex-shrink: 0;
-  padding: 14px;
-  color: var(--text);
-  background: #FFFFFF;
-  border: 1px solid #EDF1F5;
-  border-left: 4px solid transparent;
-  border-radius: 8px;
-  margin-bottom: 9px;
-}
-
-.alert-item.alert-warning {
-  background: #FFFBEB;
-  color: #92400E;
-  border-left-color: #F59E0B;
-}
-
-.alert-item.alert-danger {
-  background: #FEF2F2;
-  color: #991B1B;
-  border-left-color: #EF4444;
-}
-
-.alert-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.alert-parameter,
-.alert-value {
-  font-size: 13px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.alert-message {
-  margin: 7px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.alert-time {
-  margin-top: 8px;
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.alert-item.alert-warning .alert-time,
-.alert-item.alert-danger .alert-time {
-  color: inherit;
-}
-
-/* Empty alerts */
-
-.no-alerts {
-  width: 100%;
-  min-height: 160px;
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  color: var(--muted);
-}
-
-.no-alerts-main {
-  width: 100%;
-  max-width: 240px;
-  padding-bottom: 12px;
-  color: #334155;
-  font-size: 22px;
-  line-height: 1.2;
-  font-weight: 800;
+  justify-content: space-between;
   border-bottom: 1px solid var(--border);
 }
 
-.no-alerts-subtitle {
-  margin-top: 9px;
+.panel-count {
+  padding: 5px 9px;
+  color: #1F2937;
+  background: #F1F5F9;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.filter-empty-message {
+  flex: 0 0 auto;
+  margin: 8px 0 0;
+  padding: 8px;
   color: var(--muted);
   font-size: 12px;
-  line-height: 1.5;
-}
-
-/* =========================================================
-   ANALYTICS PAGE COMPATIBILITY
-   ========================================================= */
-
-.analytics-header,
-.analytics-grid {
-  width: 100%;
-  max-width: none;
-  box-sizing: border-box;
-}
-
-.analytics-grid > * {
-  min-width: 0;
-}
-
-.analytics-logs,
-.analytics-alerts {
-  min-width: 0;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-/* =========================================================
-   FOCUS AND TRANSITIONS
-   ========================================================= */
-
-button,
-input {
-  font-family: inherit;
-}
-
-button {
-  transition: background 0.2s ease, color 0.2s ease,
-    border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-button:focus-visible,
-input:focus-visible {
-  outline: 3px solid rgba(40, 115, 77, 0.22);
-  outline-offset: 3px;
-}
-
-/* =========================================================
-   LARGE SCREENS
-   ========================================================= */
-
-@media (min-width: 1500px) {
-  .dashboard-main {
-    padding: 24px 36px 36px;
-    gap: 20px;
-  }
-
-  .dashboard-content-grid {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: 20px;
-  }
-
-  .sensor-chart-section {
-    min-height: 470px;
-    padding: 24px;
-  }
-
-  .monitoring-column {
-    grid-template-rows: minmax(330px, 1.15fr) minmax(250px, 0.85fr);
-    gap: 18px;
-  }
-}
-
-/* =========================================================
-   TABLETS
-   ========================================================= */
-
-@media (max-width: 1000px) {
-  .dashboard-main {
-    padding: 16px;
-    gap: 14px;
-  }
-
-  .dashboard-content-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .sensor-chart-section {
-    padding: 14px;
-  }
-
-  .sensor-chart-heading h2 {
-    font-size: 17px;
-  }
-
-  .monitoring-column {
-    grid-template-rows: minmax(280px, 1fr) minmax(220px, 0.8fr);
-    gap: 12px;
-  }
-
-  .monitoring-column .panel {
-    padding: 12px;
-  }
-
-  .status-card {
-    min-height: 115px;
-    padding: 15px;
-  }
-}
-
-/* =========================================================
-   SMALL TABLETS AND MOBILE
-   ========================================================= */
-
-@media (max-width: 700px) {
-  .dashboard-main {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .header {
-    min-height: 72px;
-    padding: 10px 13px;
-  }
-
-  .header-logo {
-    width: 45px;
-    height: 45px;
-  }
-
-  .header-title {
-    font-size: 20px;
-  }
-
-  .header-subtitle {
-    font-size: 10px;
-  }
-
-  .header-date {
-    font-size: 10px;
-  }
-
-  .safe-box {
-    min-height: 85px;
-    padding: 14px;
-    font-size: clamp(25px, 7vw, 36px);
-    letter-spacing: 2px;
-  }
-
-  .status-grid {
-    gap: 9px;
-  }
-
-  .status-card {
-    min-height: 105px;
-    padding: 12px;
-    gap: 7px;
-  }
-
-  .status-card-title {
-    font-size: 10px;
-  }
-
-  .status-card-value {
-    font-size: 25px;
-  }
-
-  .date-filter {
-    padding: 13px;
-    gap: 9px;
-  }
-
-  .date-filter input {
-    flex: 1;
-    min-width: 120px;
-  }
-
-  .dashboard-content-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-
-  .sensor-chart-section {
-    min-height: 390px;
-  }
-
-  .sensor-chart-header {
-    gap: 13px;
-  }
-
-  .sensor-selector {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .sensor-selector button {
-    padding: 0 7px;
-    font-size: 11px;
-  }
-
-  .sensor-charts-column .chart-panel {
-    min-height: 270px;
-  }
-
-  .monitoring-column {
-    grid-template-rows: 330px 270px;
-    gap: 12px;
-  }
-}
-
-/* =========================================================
-   SMALL MOBILE
-   ========================================================= */
-
-@media (max-width: 420px) {
-  .dashboard-main {
-    padding: 8px;
-  }
-
-  .header {
-    align-items: center;
-    padding: 9px;
-  }
-
-  .header-logo {
-    width: 38px;
-    height: 38px;
-  }
-
-  .header-title {
-    font-size: 17px;
-  }
-
-  .header-subtitle {
-    font-size: 9px;
-  }
-
-  .header-date {
-    font-size: 9px;
-  }
-
-  .status-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .status-card {
-    min-height: 80px;
-    align-items: center;
-  }
-
-  .date-filter {
-    align-items: stretch;
-  }
-
-  .date-filter label {
-    width: 100%;
-  }
-
-  .date-filter input {
-    width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .date-filter button {
-    width: 100%;
-  }
-
-  .sensor-chart-section {
-    padding: 12px;
-    min-height: 360px;
-  }
-
-  .sensor-chart-heading h2 {
-    font-size: 16px;
-  }
-
-  .sensor-chart-heading p {
-    font-size: 11px;
-  }
-
-  .sensor-selector button {
-    min-height: 34px;
-    font-size: 10px;
-  }
-
-  .sensor-charts-column .chart-panel {
-    min-height: 245px;
-  }
-
-  .monitoring-column .panel {
-    padding: 11px;
-  }
-
-  .logs-table {
-    min-width: 420px;
-  }
-}
-
-/* =========================================================
-   SWaMS - WHITE MODERN DASHBOARD OVERRIDES
-   ========================================================= */
-
-:root {
-  --primary: #28734D;
-  --primary-dark: #195638;
-  --background: #FFFFFF;
-  --surface: #FFFFFF;
-  --text: #1F2937;
-  --muted: #64748B;
-  --border: #E2E8F0;
-  --shadow: 0 4px 16px rgba(15, 23, 42, 0.055);
-}
-
-/* ENTIRE DASHBOARD BACKGROUND */
-
-html,
-body,
-#root,
-.app,
-.dashboard-main {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-}
-
-.dashboard-main {
-  min-height: 100vh;
-  height: auto;
-  padding: 20px 28px 32px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  gap: 18px;
-}
-
-/* HEADER */
-
-.header {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 14px 22px;
-  box-shadow: var(--shadow);
-}
-
-.header-title {
-  color: #195638 !important;
-  font-weight: 800;
-}
-
-.header-subtitle,
-.header-date {
-  color: #64748B !important;
-}
-
-/* OVERALL STATUS */
-
-.safe-box {
-  min-height: 95px;
-  border: 1px solid #E2E8F0 !important;
-  border-left: 6px solid #94A3B8 !important;
-  border-radius: 12px;
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  box-shadow: var(--shadow);
-  font-size: clamp(26px, 4vw, 40px);
-  letter-spacing: 2px;
-}
-
-.safe-box.safe-status {
-  background: #FFFFFF !important;
-  color: #166534 !important;
-  border-left-color: #16A34A !important;
-}
-
-.safe-box.warning-status {
-  background: #FFFFFF !important;
-  color: #92400E !important;
-  border-left-color: #D97706 !important;
-}
-
-.safe-box.danger-status {
-  background: #FFFFFF !important;
-  color: #991B1B !important;
-  border-left-color: #DC2626 !important;
-}
-
-.safe-box.unknown-status {
-  background: #FFFFFF !important;
-  color: #475569 !important;
-  border-left-color: #94A3B8 !important;
-}
-
-/* =========================================================
-   SENSOR CARDS
-   White background with colored LEFT ACCENT ONLY
-   ========================================================= */
-
-.status-grid {
-  gap: 16px;
-}
-
-.status-card {
-  min-height: 125px;
-  padding: 20px;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 9px;
-
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-
-  border: 1px solid #E2E8F0 !important;
-  border-left: 5px solid #CBD5E1 !important;
-  border-radius: 12px;
-
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.status-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09);
-}
-
-/* SAFE - GREEN SIDE */
-
-.status-card.safe {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border-color: #E2E8F0 !important;
-  border-left: 5px solid #16A34A !important;
-}
-
-/* WARNING - YELLOW SIDE */
-
-.status-card.warning {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border-color: #E2E8F0 !important;
-  border-left: 5px solid #D97706 !important;
-}
-
-/* DANGER - RED SIDE */
-
-.status-card.danger {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border-color: #E2E8F0 !important;
-  border-left: 5px solid #DC2626 !important;
-}
-
-/* NOT EVALUATED - GRAY SIDE */
-
-.status-card.not-evaluated {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border-color: #E2E8F0 !important;
-  border-left: 5px solid #94A3B8 !important;
-}
-
-/* Keep all metric text dark */
-
-.status-card-title,
-.status-card.safe .status-card-title,
-.status-card.warning .status-card-title,
-.status-card.danger .status-card-title,
-.status-card.not-evaluated .status-card-title {
-  color: #64748B !important;
-}
-
-.status-card-value,
-.status-card.safe .status-card-value,
-.status-card.warning .status-card-value,
-.status-card.danger .status-card-value,
-.status-card.not-evaluated .status-card-value {
-  color: #1F2937 !important;
-}
-
-/* =========================================================
-   DATE FILTER
-   ========================================================= */
-
-.date-filter {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.date-filter input {
-  background: #F8FAFC !important;
-  color: #1F2937 !important;
-}
-
-/* =========================================================
-   SENSOR CHART SECTION
-   ========================================================= */
-
-.sensor-chart-section {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.sensor-chart-heading h2,
-.sensor-chart-heading p {
-  color: #1F2937 !important;
-}
-
-.sensor-chart-heading p {
-  color: #64748B !important;
-}
-
-.sensor-selector {
-  background: #F1F5F9 !important;
-}
-
-.sensor-selector button {
-  color: #64748B !important;
-}
-
-.sensor-selector button.active {
-  background: #28734D !important;
-  color: #FFFFFF !important;
-}
-
-/* Chart background */
-
-.sensor-charts-column .chart-panel {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0;
-  border-radius: 10px;
-}
-
-.sensor-charts-column .chart-graph {
-  background: #FFFFFF !important;
-}
-
-.sensor-charts-column .chart-label {
-  color: #334155 !important;
-}
-
-/* =========================================================
-   LOGS AND ALERTS PANELS
-   ========================================================= */
-
-.monitoring-column .panel,
-.panel,
-.analytics-logs,
-.analytics-alerts {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.panel-title {
-  color: #1F2937 !important;
-}
-
-.panel-header {
-  border-bottom-color: #E2E8F0;
-}
-
-/* =========================================================
-   LOGS TABLE - WHITE
-   ========================================================= */
-
-.logs-table-wrapper,
-.logs-table,
-.logs-table tbody,
-.logs-table tr,
-.logs-table td {
-  background: #FFFFFF !important;
-  color: #475569 !important;
-}
-
-.logs-table th {
-  background: #F1F5F9 !important;
-  color: #334155 !important;
-  border-color: #E2E8F0 !important;
-}
-
-.logs-table td {
-  border-color: #E2E8F0 !important;
-  color: #475569 !important;
-}
-
-.logs-table tbody tr:hover td {
-  background: #F8FAFC !important;
-}
-
-/* =========================================================
-   ALERTS
-   Keep alert cards lightly tinted
-   ========================================================= */
-
-.alert-list {
-  background: #FFFFFF !important;
-}
-
-.alert-item {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border: 1px solid #E2E8F0;
-  border-left: 4px solid transparent;
-  border-radius: 9px;
-  margin-bottom: 9px;
-}
-
-.alert-item.alert-warning {
-  background: #FFFBEB !important;
-  color: #92400E !important;
-  border-left: 4px solid #F59E0B !important;
-}
-
-.alert-item.alert-danger {
-  background: #FEF2F2 !important;
-  color: #991B1B !important;
-  border-left: 4px solid #EF4444 !important;
-}
-
-.alert-time {
-  color: #64748B !important;
-}
-
-.no-alerts {
-  background: #FFFFFF !important;
-  color: #64748B !important;
-}
-
-/* =========================================================
-   LOADING AND ERROR MESSAGES
-   ========================================================= */
-
-.dashboard-main > p {
-  background: #FFFFFF !important;
-  color: #64748B !important;
-  border: 1px solid #E2E8F0;
-  border-radius: 9px;
-}
-
-.dashboard-main > p[role="alert"] {
-  background: #FEF2F2 !important;
-  color: #991B1B !important;
+  text-align: center;
+  background: #F8FAFC;
+  border: 1px dashed #CBD5E1;
+  border-radius: 8px;
 }
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
+/* Tablets */
 @media (max-width: 1000px) {
   .dashboard-main {
     padding: 16px;
   }
 }
 
+/* Small tablets and mobile */
 @media (max-width: 700px) {
   .dashboard-main {
     padding: 12px;
     gap: 12px;
   }
 
+  .status-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
   .status-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .status-card {
-    min-height: 105px;
+  .dashboard-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .monitoring-column {
+    grid-template-rows: 280px 280px;
+  }
+
+  .monitoring-column .panel {
+    height: 280px;
   }
 }
 
+/* Small mobile */
 @media (max-width: 420px) {
   .dashboard-main {
     padding: 8px;
@@ -1449,58 +202,4 @@ body,
   .status-grid {
     grid-template-columns: 1fr;
   }
-
-  .status-card {
-    min-height: 85px;
-  }
-}
-
-
-/* =========================================================
-   DATE FILTER CLEAR BUTTON
-   ========================================================= */
-
-.clear-filter-button {
-  align-self: flex-start;
-  padding: 8px 14px;
-  background: #FFFFFF;
-  color: #28734D;
-  border: 1px solid #28734D;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.clear-filter-button:hover {
-  background: #E8F3EC;
-}
-
-/* =========================================================
-   PANEL RECORD COUNTERS
-   ========================================================= */
-
-.panel-count {
-  padding: 5px 9px;
-  background: #E8F3EC;
-  color: #28734D;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-/* =========================================================
-   EMPTY FILTER RESULTS
-   ========================================================= */
-
-.filter-empty-message {
-  padding: 12px;
-  margin: 8px 0;
-  color: #64748B;
-  font-size: 12px;
-  text-align: center;
-  background: #F8FAFC;
-  border: 1px dashed #CBD5E1;
-  border-radius: 8px;
 }
