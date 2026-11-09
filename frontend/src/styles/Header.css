@@ -46,10 +46,25 @@
   font-weight: 500;
 }
 
-.header-date {
-  color: var(--muted);
+/* Logout button (replaces the date/time) */
+
+.logout-button {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 18px;
+  background: #FFFFFF;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 7px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: var(--primary);
+  color: #FFFFFF;
 }
 
 /* =========================================================
@@ -70,9 +85,14 @@
     font-size: 20px;
   }
 
-  .header-subtitle,
-  .header-date {
+  .header-subtitle {
     font-size: 10px;
+  }
+
+  .logout-button {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
   }
 }
 
@@ -86,8 +106,41 @@
     font-size: 17px;
   }
 
-  .header-subtitle,
-  .header-date {
+  .header-subtitle {
     font-size: 9px;
+  }
+}
+
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-button {
+  background: #28734D;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.settings-button:hover {
+  background: #195638;
+}
+
+@media (max-width: 480px) {
+  .header-actions {
+    gap: 6px;
+  }
+
+  .settings-button,
+  .logout-button {
+    padding: 8px 10px;
+    font-size: 11px;
   }
 }

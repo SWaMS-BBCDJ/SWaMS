@@ -1,3 +1,5 @@
+from itsdangerous import URLSafeTimedSerializer
+from app.models import User
 
 import math
 from datetime import date, datetime, time, timedelta, timezone
@@ -334,3 +336,39 @@ def ingest():
             for breach in breaches
         ],
     ), 201
+
+
+# ==========================================
+# USER AUTHENTICATION
+# ==========================================
+@main.post("/api/auth/login")
+def login():
+    data = request.get_json(silent=True) or {}
+
+    username = str(data.get("username", "")).strip()
+    password = data.get("password", "")
+
+    if not username or not isinstance(password, str) or not password:
+        return jsonify(message="Username and password are required"), 400
+
+    user = User.query.filter_by(username=username).first()
+
+    if user is None or not user.check_password(password):
+        return jsonify(message="Invalid username or password"), 401
+
+    serializer = URLSafeTimedSerializer(
+        current_app.config["SECRET_KEY"],
+        salt="swams-auth"
+    )
+
+    token = serializer.dumps({"user_id": user.id})
+
+    return jsonify(
+    message="Login successful",
+    token=token,
+    user={
+        "id": user.id,
+        "username": user.username,
+        "role": user.role
+        }
+    ), 200
