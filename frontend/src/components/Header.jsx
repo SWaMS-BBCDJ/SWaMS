@@ -23,7 +23,7 @@ function Header() {
         <div>
           <h1 className="header-title">SWaMS</h1>
           <p className="header-subtitle">
-            Claveria, Misamis Oriental
+            Solar Water Monitoring System
           </p>
         </div>
       </div>
