@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWaMS Dashboard</title>
+
+  <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <main class="dashboard">
+
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+      <img
+        class="brand-mark"
+        src="{{ url_for('static', filename='images/swams-logo.png') }}"
+        alt="SWaMS water monitoring logo"
+        width="58"
+        height="58"
+      >
+
+      <div class="header-copy">
+        <p class="eyebrow">WATER MONITORING DASHBOARD</p>
+        <h1>SWaMS</h1>
+        <p class="sub">Tilapia fishpond · Claveria, Misamis Oriental</p>
+      </div>
+
+      <div class="header-tools">
+        <span id="connection-status" class="connection-status is-checking">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <span id="connection-label">Checking sensor</span>
+        </span>
+
+        <button id="refresh-dashboard" class="refresh-button" type="button">
+          Refresh data
+        </button>
+      </div>
+    </header>
+
+    <!-- Pond Overview -->
+    <section class="pond-overview" aria-label="Pond overview">
+      <div class="overview-item status-overview">
+        <div class="overview-icon" aria-hidden="true">◎</div>
+
+        <div class="overview-copy">
+          <span class="overview-label">Current pond status</span>
+          <span id="pond-status" class="pond-status status-unknown">
+            CHECKING...
+          </span>
+          <span class="overview-description">
+            Based on the latest available sensor readings
+          </span>
+        </div>
+      </div>
+
+      <div class="overview-item">
+        <div class="overview-icon reading-icon" aria-hidden="true">◷</div>
+
+        <div class="overview-copy">
+          <span class="overview-label">Latest sensor reading</span>
+          <span id="last-reading" class="last-reading">
+            Checking for readings...
+          </span>
+          <span class="overview-description">
+            Most recent recorded measurement
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Current Water Quality -->
+    <section class="measurement-section" aria-labelledby="measurements-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">LIVE CONDITIONS</p>
+          <h2 id="measurements-heading">Water Quality</h2>
+        </div>
+
+        <div class="update-meta">
+          <span
+            id="device-freshness"
+            class="freshness-badge is-unknown"
+            role="status"
+            title="Data is considered fresh for up to six hours"
+          >
+            <span class="freshness-dot" aria-hidden="true"></span>
+            <span id="freshness-label">Checking data age</span>
+          </span>
+
+          <span id="updated-at" class="updated-at">Waiting for update</span>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card" id="card-ph">
+          <div class="card-heading">
+            <span class="metric-icon ph-icon" aria-hidden="true">pH</span>
+            <span class="label">pH Level</span>
+            <span id="state-ph" class="metric-state state-unknown">Waiting</span>
+          </div>
+
+          <span class="value" id="val-ph">--</span>
+
+          <span class="range">
+            Safe range:
+            {{ '%.1f'|format(thresholds.get('ph', {}).get('safe_min', 6.5)) }}–{{ '%.1f'|format(thresholds.get('ph', {}).get('safe_max', 9.0)) }}
+          </span>
+        </div>
+
+        <div class="card" id="card-temp">
+          <div class="card-heading">
+            <span class="metric-icon temp-icon" aria-hidden="true">°</span>
+            <span class="label">Temperature</span>
+            <span id="state-temp" class="metric-state state-unknown">Waiting</span>
+          </div>
+
+          <span class="value" id="val-temp">--</span>
+
+          <span class="range">
+            Safe range:
+            {{ '%.1f'|format(thresholds.get('temperature', {}).get('safe_min', 27.0)) }}–{{ '%.1f'|format(thresholds.get('temperature', {}).get('safe_max', 30.0)) }} °C
+          </span>
+        </div>
+
+        <div class="card" id="card-turb">
+          <div class="card-heading">
+            <span class="metric-icon turb-icon" aria-hidden="true">≋</span>
+            <span class="label">Turbidity</span>
+            <span id="state-turb" class="metric-state state-unknown">Waiting</span>
+          </div>
+
+          <span class="value" id="val-turb">--</span>
+
+          <span class="range">
+            Safe range:
+            {{ '%.1f'|format(thresholds.get('turbidity', {}).get('safe_min', 0)) }}–{{ '%.1f'|format(thresholds.get('turbidity', {}).get('safe_max', 50)) }} NTU
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Historical Data and Recent Alerts -->
+    <section class="insights-grid" aria-label="Water quality history">
+
+      <!-- Historical Data -->
+      <section class="chart-panel" aria-labelledby="trend-heading">
+        <div class="chart-header">
+          <div>
+            <p class="eyebrow">WATER QUALITY</p>
+            <h2 id="trend-heading">Historical Data</h2>
+            <p class="chart-description">Track a measurement over time.</p>
+          </div>
+
+          <div class="chart-controls">
+            <div class="range-filter" role="group" aria-label="Chart date range">
+              <button
+                type="button"
+                class="range-button"
+                data-days="7"
+                aria-pressed="false"
+              >7 days</button>
+
+              <button
+                type="button"
+                class="range-button"
+                data-days="14"
+                aria-pressed="false"
+              >14 days</button>
+
+              <button
+                type="button"
+                class="range-button is-active"
+                data-days="28"
+                aria-pressed="true"
+              >28 days</button>
+            </div>
+
+            <label class="chart-select-label" for="trend-parameter">
+              <span>Parameter</span>
+              <select id="trend-parameter">
+                <option value="ph">pH level</option>
+                <option value="temperature">Temperature</option>
+                <option value="turbidity">Turbidity</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas
+            id="trendChart"
+            aria-label="Historical water quality chart"
+          ></canvas>
+        </div>
+      </section>
+
+      <!-- Recent Alerts with Date Filters -->
+      <section class="alert-log" aria-labelledby="alerts-heading">
+        <div class="alert-log-header">
+          <div>
+            <p class="eyebrow">HISTORY</p>
+            <h2 id="alerts-heading">Recent Alerts</h2>
+            <p>Readings outside safe thresholds.</p>
+          </div>
+
+          <span class="alert-count" id="alert-count">Loading alerts...</span>
+        </div>
+
+        <!-- Quick date filters -->
+        <div class="alert-filters">
+          <div
+            class="alert-range-buttons"
+            role="group"
+            aria-label="Filter alerts by date"
+          >
+            <button
+              type="button"
+              class="alert-range-button"
+              data-range="today"
+              aria-pressed="false"
+            >Today</button>
+
+            <button
+              type="button"
+              class="alert-range-button is-active"
+              data-range="7"
+              aria-pressed="true"
+            >Last 7 Days</button>
+
+            <button
+              type="button"
+              class="alert-range-button"
+              data-range="28"
+              aria-pressed="false"
+            >Last 28 Days</button>
+
+            <button
+              type="button"
+              class="alert-range-button"
+              data-range="custom"
+              aria-pressed="false"
+            >Custom</button>
+          </div>
+
+          <!-- Custom date range -->
+          <div class="alert-custom-dates" id="alert-custom-dates" hidden>
+            <label for="alert-date-from">
+              From
+              <input type="date" id="alert-date-from">
+            </label>
+
+            <label for="alert-date-to">
+              To
+              <input type="date" id="alert-date-to">
+            </label>
+
+            <button
+              type="button"
+              id="apply-alert-dates"
+              class="alert-apply-button"
+            >Apply</button>
+          </div>
+        </div>
+
+        <!-- Alerts table -->
+        <div class="alert-table-wrap">
+          <table class="alert-table">
+            <thead>
+              <tr>
+                <th scope="col">Date &amp; Time</th>
+                <th scope="col">Parameter</th>
+                <th scope="col">Measured Value</th>
+                <th scope="col">Alert Details</th>
+                <th scope="col"><span class="visually-hidden">More information</span></th>
+              </tr>
+            </thead>
+
+            <tbody id="alerts-table-body">
+              <tr>
+                <td colspan="5" class="empty-alerts">Loading alerts...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Results count and pagination -->
+        <div class="alert-footer">
+          <span id="alert-showing-count">Loading...</span>
+
+          <button
+            type="button"
+            id="show-more-alerts"
+            class="alert-more-button"
+            hidden
+          >View all alerts</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Data passed from Flask to JavaScript -->
+  <script id="swams-dashboard-data" type="application/json">
+  {
+    "latest": {{ ({
+      "ph": latest_reading.ph,
+      "temperature": latest_reading.temperature,
+      "turbidity": latest_reading.turbidity,
+      "timestamp": latest_reading.timestamp.isoformat()
+    } if latest_reading else none) | tojson }},
+    "thresholds": {{ thresholds | tojson }}
+  }
+  </script>
+
+  <!-- Dashboard scripts -->
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/alerts.js') }}"></script>
+</body>
+</html>
