@@ -1,10 +1,17 @@
-
 from getpass import getpass
+import re
 
 from app import create_app, db
 from app.models import User
 
 app = create_app()
+
+
+def valid_mobile_number(number):
+    # Accept Philippine mobile numbers in international format:
+    # Example format: +639XXXXXXXXX
+    return re.fullmatch(r"\+639\d{9}", number) is not None
+
 
 def setup_account(username, role):
     user = User.query.filter_by(username=username).first()
@@ -22,8 +29,20 @@ def setup_account(username, role):
         user = User(username=username, role=role)
         user.set_password(password)
         db.session.add(user)
-
         print(f"Created {role} account: {username}")
+
+    if role == "operator":
+        while True:
+            mobile_number = input(
+                "Enter operator mobile number (+639XXXXXXXXX): "
+            ).strip()
+
+            if valid_mobile_number(mobile_number):
+                user.mobile_number = mobile_number
+                print("Operator mobile number saved.")
+                break
+
+            print("Invalid format. Use +639XXXXXXXXX.")
 
     db.session.commit()
 

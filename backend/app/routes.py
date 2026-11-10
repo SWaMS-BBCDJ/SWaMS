@@ -2,7 +2,7 @@ from itsdangerous import URLSafeTimedSerializer
 from app.models import User
 from functools import wraps
 from itsdangerous import BadSignature
-
+import re
 
 import math
 from datetime import date, datetime, time, timedelta, timezone
@@ -489,4 +489,69 @@ def update_threshold_settings():
 
     return jsonify(
         message="Threshold settings saved successfully"
+    ), 200
+
+# ==========================================
+# ADMIN SETTINGS - OPERATOR MOBILE NUMBER
+# ==========================================
+
+def get_operator_account():
+    operators = User.query.filter_by(role="operator").all()
+
+    if not operators:
+        return None, (
+            jsonify(message="No operator account found."),
+            404,
+        )
+
+    if len(operators) > 1:
+        return None, (
+            jsonify(
+                message="Multiple operator accounts found. "
+                        "Please configure which operator receives SMS alerts."
+            ),
+            409,
+        )
+
+    return operators[0], None
+
+
+@main.get("/api/settings/operator-mobile")
+@admin_required
+def get_operator_mobile():
+    operator, error = get_operator_account()
+
+    if error:
+        return error
+
+    return jsonify(
+        username=operator.username,
+        mobile_number=operator.mobile_number or "",
+    ), 200
+
+
+@main.put("/api/settings/operator-mobile")
+@admin_required
+def update_operator_mobile():
+    data = request.get_json(silent=True) or {}
+    mobile_number = str(data.get("mobile_number", "")).strip()
+
+    if not re.fullmatch(r"\+639\d{9}", mobile_number):
+        return jsonify(
+            message="Enter a valid Philippine mobile number "
+                    "in the format +639XXXXXXXXX."
+        ), 400
+
+    operator, error = get_operator_account()
+
+    if error:
+        return error
+
+    operator.mobile_number = mobile_number
+    db.session.commit()
+
+    return jsonify(
+        message="Operator mobile number saved successfully.",
+        username=operator.username,
+        mobile_number=operator.mobile_number,
     ), 200

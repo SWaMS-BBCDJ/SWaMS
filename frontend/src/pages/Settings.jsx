@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getToken } from "../services/auth";
+import "../styles/Settings.css";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -20,11 +21,18 @@ const parameterInfo = [
 function Settings() {
   const navigate = useNavigate();
 
+  // Threshold states
   const [thresholds, setThresholds] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  // SMS states
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [savingMobile, setSavingMobile] = useState(false);
+  const [mobileMessage, setMobileMessage] = useState("");
+  const [mobileError, setMobileError] = useState("");
 
   // Load saved thresholds
   useEffect(() => {
@@ -59,6 +67,83 @@ function Settings() {
     loadThresholds();
   }, []);
 
+  // Load existing operator mobile number
+  useEffect(() => {
+    async function loadOperatorMobile() {
+      try {
+        const response = await fetch(
+          `${API_URL}/settings/operator-mobile`,
+          {
+            headers: {
+              Authorization: `Bearer ${getToken()}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to load operator mobile number"
+          );
+        }
+
+        setMobileNumber(data.mobile_number || "");
+      } catch (err) {
+        setMobileError(err.message);
+      }
+    }
+
+    loadOperatorMobile();
+  }, []);
+
+  // Save operator mobile number
+  async function saveOperatorMobile() {
+    setSavingMobile(true);
+    setMobileMessage("");
+    setMobileError("");
+
+    try {
+      const number = mobileNumber.trim();
+
+      if (!/^\+639\d{9}$/.test(number)) {
+        throw new Error(
+          "Enter a valid Philippine mobile number in the format +639XXXXXXXXX."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/settings/operator-mobile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
+            mobile_number: number,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to save operator mobile number"
+        );
+      }
+
+      setMobileNumber(data.mobile_number);
+      setMobileMessage(data.message);
+    } catch (err) {
+      setMobileError(err.message);
+    } finally {
+      setSavingMobile(false);
+    }
+  }
+
+  // Update threshold input
   function handleChange(parameter, field, value) {
     setThresholds((previous) => ({
       ...previous,
@@ -72,6 +157,7 @@ function Settings() {
     setError("");
   }
 
+  // Save threshold settings
   async function saveThresholds(values) {
     setSaving(true);
     setMessage("");
@@ -130,6 +216,7 @@ function Settings() {
     }
   }
 
+  // Restore default thresholds
   function restoreDefaults() {
     const confirmed = window.confirm(
       "Restore the default SWaMS threshold values?"
@@ -141,173 +228,202 @@ function Settings() {
     }
   }
 
-  const inputStyle = {
-    width: "100%",
-    padding: "11px",
-    border: "1px solid #D1D5DB",
-    borderRadius: "7px",
-    fontSize: "15px",
-    marginTop: "6px",
-  };
-
   if (loading) {
-    return <div style={{ padding: "30px" }}>Loading settings...</div>;
+    return (
+      <main className="settings-main">
+        <p className="settings-description">Loading settings...</p>
+      </main>
+    );
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      padding: "30px",
-      background: "#D2DFE4",
-    }}>
-      <div style={{
-        maxWidth: "1000px",
-        margin: "0 auto",
-      }}>
+    <main className="settings-main">
+      {/* PAGE HEADER */}
+      <header className="settings-header">
+        <div>
+          <button
+            className="settings-button settings-button-secondary"
+            onClick={() => navigate("/")}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
 
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            padding: "10px 16px",
-            border: "none",
-            borderRadius: "7px",
-            cursor: "pointer",
-            marginBottom: "20px",
-          }}
-        >
-          ← Back to Dashboard
-        </button>
+        <h1 className="settings-title">System Settings</h1>
 
-        <h1 style={{ marginBottom: "8px" }}>
-          System Settings
-        </h1>
-
-        <p style={{ color: "#64748B", marginBottom: "25px" }}>
+        <p className="settings-description">
           Configure your SWaMS water-quality monitoring system.
         </p>
+      </header>
 
-        <section style={{
-          background: "#FFFFFF",
-          padding: "25px",
-          borderRadius: "12px",
-          boxShadow: "0 4px 16px rgba(15,23,42,0.06)",
-        }}>
+      {/* TWO-COLUMN LAYOUT */}
+      <div className="settings-grid">
 
-          <h2 style={{ marginTop: 0 }}>
-            Alert Threshold Management
-          </h2>
+        {/* LEFT COLUMN: THRESHOLD MANAGEMENT */}
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <h2 className="settings-card-title">
+              Alert Threshold Management
+            </h2>
 
-          <p style={{ color: "#64748B" }}>
-            Set the acceptable minimum and maximum values
-            for each water-quality parameter.
-          </p>
+            <p className="settings-card-description">
+              Set the acceptable minimum and maximum values
+              for each water-quality parameter.
+            </p>
+          </div>
 
-          {parameterInfo.map((parameter) => (
-            <div
-              key={parameter.key}
-              style={{
-                padding: "20px 0",
-                borderBottom: "1px solid #E2E8F0",
-              }}
-            >
-              <h3 style={{ marginTop: 0 }}>
-                {parameter.label}
-              </h3>
+          <div className="settings-form">
+            {parameterInfo.map((parameter) => (
+              <div className="settings-parameter" key={parameter.key}>
+                <h3 className="settings-label">
+                  {parameter.label}
+                </h3>
 
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "20px",
-              }}>
-                <label>
-                  Minimum ({parameter.unit})
-                  <input
-                    type="number"
-                    step="any"
-                    value={thresholds[parameter.key]?.safe_min ?? ""}
-                    onChange={(e) =>
-                      handleChange(
-                        parameter.key,
-                        "safe_min",
-                        e.target.value
-                      )
-                    }
-                    style={inputStyle}
-                  />
-                </label>
+                <div className="settings-range-grid">
+                  <label className="settings-field">
+                    <span className="settings-label">
+                      Minimum ({parameter.unit})
+                    </span>
 
-                <label>
-                  Maximum ({parameter.unit})
-                  <input
-                    type="number"
-                    step="any"
-                    value={thresholds[parameter.key]?.safe_max ?? ""}
-                    onChange={(e) =>
-                      handleChange(
-                        parameter.key,
-                        "safe_max",
-                        e.target.value
-                      )
-                    }
-                    style={inputStyle}
-                  />
-                </label>
+                    <input
+                      className="settings-input"
+                      type="number"
+                      step="any"
+                      value={
+                        thresholds[parameter.key]?.safe_min ?? ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          parameter.key,
+                          "safe_min",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="settings-field">
+                    <span className="settings-label">
+                      Maximum ({parameter.unit})
+                    </span>
+
+                    <input
+                      className="settings-input"
+                      type="number"
+                      step="any"
+                      value={
+                        thresholds[parameter.key]?.safe_max ?? ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          parameter.key,
+                          "safe_max",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </label>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {message && (
-            <p style={{ color: "green", marginTop: "20px" }}>
+            <p className="settings-message settings-message-success">
               ✓ {message}
             </p>
           )}
 
           {error && (
-            <p style={{ color: "red", marginTop: "20px" }}>
+            <p className="settings-message settings-message-error">
               {error}
             </p>
           )}
 
-          <div style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginTop: "25px",
-          }}>
+          <div className="settings-actions">
             <button
+              className="settings-button settings-button-primary"
               onClick={() => saveThresholds(thresholds)}
               disabled={saving}
-              style={{
-                padding: "12px 22px",
-                background: "#28734D",
-                color: "white",
-                border: "none",
-                borderRadius: "7px",
-                cursor: "pointer",
-              }}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
 
             <button
+              className="settings-button settings-button-secondary"
               onClick={restoreDefaults}
               disabled={saving}
-              style={{
-                padding: "12px 22px",
-                background: "#E5E7EB",
-                color: "#1F2937",
-                border: "none",
-                borderRadius: "7px",
-                cursor: "pointer",
-              }}
             >
               Restore Defaults
             </button>
           </div>
-
         </section>
+
+        {/* RIGHT COLUMN: SMS SETTINGS */}
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <h2 className="settings-card-title">
+              SMS Notification Settings
+            </h2>
+
+            <p className="settings-card-description">
+              Configure the operator's mobile number that will receive
+              water-quality alert notifications.
+            </p>
+          </div>
+
+          <div className="settings-form">
+            <label className="settings-field">
+              <span className="settings-label">
+                Operator Mobile Number
+              </span>
+
+              <input
+                className="settings-input"
+                type="tel"
+                placeholder="+639XXXXXXXXX"
+                value={mobileNumber}
+                onChange={(e) => {
+                  setMobileNumber(e.target.value);
+                  setMobileMessage("");
+                  setMobileError("");
+                }}
+              />
+
+              <span className="settings-help">
+                Use Philippine international format, for example:
+                +639XXXXXXXXX.
+              </span>
+            </label>
+          </div>
+
+          {mobileMessage && (
+            <p className="settings-message settings-message-success">
+              ✓ {mobileMessage}
+            </p>
+          )}
+
+          {mobileError && (
+            <p className="settings-message settings-message-error">
+              {mobileError}
+            </p>
+          )}
+
+          <div className="settings-actions">
+            <button
+              className="settings-button settings-button-primary"
+              onClick={saveOperatorMobile}
+              disabled={savingMobile}
+            >
+              {savingMobile
+                ? "Saving..."
+                : "Save Mobile Number"}
+            </button>
+          </div>
+        </section>
+
       </div>
-    </div>
+    </main>
   );
 }
 

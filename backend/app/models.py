@@ -45,6 +45,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="operator")
+    mobile_number = db.Column(db.String(20), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

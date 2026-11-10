@@ -1,0 +1,271 @@
+
+/* =========================================================
+   SWaMS - SETTINGS PAGE
+   Uses the shared variables from global.css
+   ========================================================= */
+
+.settings-main {
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+}
+
+.settings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.settings-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.settings-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Two-column layout */
+
+.settings-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* White settings panels */
+
+.settings-card {
+  min-width: 0;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.settings-card-header {
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-card-title {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--section-title-size);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.settings-card-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Form fields */
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(40, 115, 77, 0.12);
+}
+
+.settings-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Buttons */
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 5px;
+}
+
+.settings-button {
+  min-height: 39px;
+  padding: 9px 15px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-button-primary {
+  color: #FFFFFF;
+  background: var(--primary);
+}
+
+.settings-button-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.settings-button-secondary {
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  border-color: #C8DFD0;
+}
+
+.settings-button-secondary:hover:not(:disabled) {
+  background: #D8EBDD;
+}
+
+/* Feedback messages */
+
+.settings-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settings-message-success {
+  color: #166534;
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.settings-message-error {
+  color: #991B1B;
+  background: #FEF2F2;
+  border-color: #FECACA;
+}
+
+/* Responsive */
+
+@media (max-width: 1000px) {
+  .settings-main {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 700px) {
+  .settings-main {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-card {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+  .settings-main {
+    padding: 8px;
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .settings-button {
+    width: 100%;
+  }
+}
+
+
+/* Threshold parameter rows */
+
+.settings-parameter {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-parameter:first-child {
+  padding-top: 0;
+}
+
+.settings-parameter:last-child {
+  border-bottom: none;
+}
+
+.settings-parameter > .settings-label {
+  margin: 0 0 12px;
+}
+
+/* Minimum and maximum input columns */
+
+.settings-range-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Back button spacing */
+
+.settings-header > div {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 420px) {
+  .settings-range-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
