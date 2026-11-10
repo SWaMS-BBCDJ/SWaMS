@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { logout, getCurrentUser } from "../services/auth";
 import "../styles/Header.css";
+import { Settings as SettingsIcon } from "lucide-react";
 
 function Header() {
   const navigate = useNavigate();
@@ -33,8 +34,10 @@ function Header() {
           <button
             className="settings-button"
             onClick={() => navigate("/settings")}
+            title="Settings"
+            aria-label="Settings"
           >
-            SETTINGS
+            <SettingsIcon className="settings-icon" strokeWidth={2} />
           </button>
         )}
 
