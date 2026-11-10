@@ -1,9 +1,19 @@
 
-function LatestReading({ timestamp }) {
+import "../styles/LatestReading.css";
+
+function LatestReading({ reading, status }) {
+  const timestamp =
+    reading?.recordedAt ??
+    reading?.timestamp ??
+    reading?.t ??
+    reading?.recorded_at ??
+    reading?.created_at ??
+    null;
+
   const readingDate = timestamp ? new Date(timestamp) : null;
 
   const isValidDate =
-    readingDate && !isNaN(readingDate.getTime());
+    readingDate && !Number.isNaN(readingDate.getTime());
 
   const formattedDate = isValidDate
     ? readingDate.toLocaleDateString("en-US", {
@@ -22,9 +32,10 @@ function LatestReading({ timestamp }) {
     : "--:--:--";
 
   return (
-    <section className="latest-reading-container">
+    <section
+      className={`latest-reading-container ${status}`}
+    >
       <div className="latest-reading-box">
-
         <span className="latest-reading-label">
           LATEST SENSOR READING
         </span>
@@ -36,7 +47,6 @@ function LatestReading({ timestamp }) {
         <span className="latest-reading-time">
           {formattedTime}
         </span>
-
       </div>
     </section>
   );

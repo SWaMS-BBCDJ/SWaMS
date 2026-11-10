@@ -53,39 +53,53 @@ function isWithinDateRange(timestamp, startDate, endDate) {
    SENSOR STATUS
    ========================================================= */
 
-function getParameterStatus(parameter, value) {
+function getParameterStatus(parameter, value, limits) {
   if (
     value == null ||
     value === "" ||
-    !Number.isFinite(Number(value))
+    !Number.isFinite(Number(value)) ||
+    !limits
   ) {
     return "NOT EVALUATED";
   }
 
   const v = Number(value);
+  const min = Number(limits.safe_min);
+  const max = Number(limits.safe_max);
 
-  if (parameter === "ph") {
-    if (v < 0 || v > 14) return "NOT EVALUATED";
-    if (v < 6.5 || v > 8.5) return "DANGER";
-    if (v <= 6.7 || v >= 8.3) return "WARNING";
-    return "SAFE";
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return "NOT EVALUATED";
   }
 
-  if (parameter === "temperature") {
-    if (v < -50 || v > 100) return "NOT EVALUATED";
-    if (v < 24 || v > 32) return "DANGER";
-    if (v <= 25 || v >= 31) return "WARNING";
-    return "SAFE";
+  // Physical sensor validation
+  if (parameter === "ph" && (v < 0 || v > 14)) {
+    return "NOT EVALUATED";
   }
 
-  if (parameter === "turbidity") {
-    if (v < 0) return "NOT EVALUATED";
-    if (v < 50 || v > 100) return "DANGER";
-    if (v <= 55 || v >= 95) return "WARNING";
-    return "SAFE";
+  if (parameter === "temperature" && (v < -50 || v > 100)) {
+    return "NOT EVALUATED";
   }
 
-  return "NOT EVALUATED";
+  if (parameter === "turbidity" && v < 0) {
+    return "NOT EVALUATED";
+  }
+
+  // Outside database safe range
+  if (v < min || v > max) {
+    return "DANGER";
+  }
+
+  // Warning when close to either safe boundary.
+  const warningMargin = (max - min) * 0.1;
+
+  if (
+    v <= min + warningMargin ||
+    v >= max - warningMargin
+  ) {
+    return "WARNING";
+  }
+
+  return "SAFE";
 }
 
 /* =========================================================
@@ -173,6 +187,8 @@ function createAlerts(reading, statuses) {
 function Dashboard() {
 
   const [readings, setReadings] = useState([]);
+  const [thresholds, setThresholds] = useState(null);
+  const [thresholdError, setThresholdError] = useState("");
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -182,6 +198,8 @@ function Dashboard() {
 
   const [selectedParameter, setSelectedParameter] =
     useState("ph");
+  
+  
 
   /* =======================================================
      FETCH SENSOR READINGS
@@ -248,6 +266,48 @@ function Dashboard() {
 
   }, []);
 
+  useEffect(() => {
+  let active = true;
+
+  async function fetchThresholds() {
+      try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+          "http://localhost:5000/api/settings/thresholds",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Could not load thresholds (${response.status})`
+          );
+        }
+
+        const data = await response.json();
+
+        if (active) {
+          setThresholds(data);
+          setThresholdError("");
+        }
+      } catch (error) {
+        if (active) {
+          setThresholdError(error.message);
+        }
+      }
+    }
+
+    fetchThresholds();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   /* =======================================================
      LATEST SENSOR READING
 
@@ -256,8 +316,31 @@ function Dashboard() {
      ======================================================= */
 
   const latestReading = readings.length
-    ? readings[readings.length - 1]
-    : null;
+  ? [...readings].sort((a, b) => {
+      const dateA = new Date(a.recordedAt).getTime();
+      const dateB = new Date(b.recordedAt).getTime();
+
+      return dateB - dateA;
+    })[0]
+  : null;
+
+  const latestReadingAge = latestReading?.recordedAt
+  ? Date.now() - new Date(latestReading.recordedAt).getTime()
+  : Infinity;
+
+  const isReceivingReadings =
+  latestReadingAge >= 0 &&
+  latestReadingAge <= 30000;
+
+  const liveReading = isReceivingReadings
+  ? latestReading
+  : null;
+
+  const latestReadingStatus = liveReading
+  ? "receiving"
+  : "not-receiving";
+
+  
 
   /* =======================================================
      DATE-FILTERED READINGS
@@ -301,28 +384,33 @@ function Dashboard() {
 
   const phStatus = getParameterStatus(
     "ph",
-    latestReading?.ph
+    liveReading?.ph,
+    thresholds?.ph
   );
 
   const temperatureStatus = getParameterStatus(
     "temperature",
-    latestReading?.temperature
+    liveReading?.temperature,
+    thresholds?.temperature
   );
 
   const turbidityStatus = getParameterStatus(
     "turbidity",
-    latestReading?.turbidity
+    liveReading?.turbidity,
+    thresholds?.turbidity
   );
 
   /* =======================================================
      OVERALL STATUS
      ======================================================= */
 
-  const overallStatus = getOverallStatus([
-    phStatus,
-    temperatureStatus,
-    turbidityStatus,
-  ]);
+  const overallStatus = !liveReading
+  ? "NOT EVALUATED"
+  : getOverallStatus([
+      phStatus,
+      temperatureStatus,
+      turbidityStatus,
+    ]);
 
   /* =======================================================
      DATE-FILTERED ALERTS
@@ -339,17 +427,20 @@ function Dashboard() {
 
         phStatus: getParameterStatus(
           "ph",
-          reading.ph
+          reading.ph,
+          thresholds?.ph
         ),
 
         temperatureStatus: getParameterStatus(
           "temperature",
-          reading.temperature
+          reading.temperature,
+          thresholds?.temperature
         ),
 
         turbidityStatus: getParameterStatus(
           "turbidity",
-          reading.turbidity
+          reading.turbidity,
+          thresholds?.turbidity
         ),
 
       };
@@ -358,7 +449,7 @@ function Dashboard() {
 
     });
 
-  }, [filteredReadings]);
+  }, [filteredReadings, thresholds]);
 
   /* =======================================================
      CHART LABELS
@@ -401,7 +492,15 @@ function Dashboard() {
         {/* ERROR MESSAGE */}
 
         {error && (
-          <p role="alert">{error}</p>
+          <p role="alert">
+            {error}
+          </p>
+        )}
+
+        {thresholdError && (
+          <p role="alert">
+            Unable to load thresholds: {thresholdError}
+          </p>
         )}
 
         {/* EMPTY READINGS */}
@@ -415,7 +514,7 @@ function Dashboard() {
         <div className="status-summary-grid">
           <StatusBanner status={overallStatus} />
 
-          <LatestReading reading={latestReading} />
+          <LatestReading reading={liveReading}  status={latestReadingStatus} />
         </div>
 
         {/* SENSOR METRIC CARDS */}
@@ -429,9 +528,9 @@ function Dashboard() {
             <MetricCard
               title="PH"
               value={
-                latestReading?.ph == null
+                liveReading?.ph == null
                   ? "--"
-                  : Number(latestReading.ph).toFixed(2)
+                  : Number(liveReading.ph).toFixed(2)
               }
               status={phStatus}
             />
@@ -439,9 +538,9 @@ function Dashboard() {
             <MetricCard
               title="TEMPERATURE"
               value={
-                latestReading?.temperature == null
+                liveReading?.temperature == null
                   ? "--"
-                  : Number(latestReading.temperature).toFixed(1)
+                  : Number(liveReading.temperature).toFixed(1)
               }
               unit="°C"
               status={temperatureStatus}
@@ -450,9 +549,9 @@ function Dashboard() {
             <MetricCard
               title="TURBIDITY"
               value={
-                latestReading?.turbidity == null
+                liveReading?.turbidity == null
                   ? "--"
-                  : Number(latestReading.turbidity).toFixed(1)
+                  : Number(liveReading.turbidity).toFixed(1)
               }
               unit="NTU"
               status={turbidityStatus}

@@ -1,4 +1,4 @@
-
+import '../styles/MetricCard.css';
 function MetricCard({
   title,
   value,

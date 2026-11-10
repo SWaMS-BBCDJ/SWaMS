@@ -1,5 +1,8 @@
 from itsdangerous import URLSafeTimedSerializer
 from app.models import User
+from functools import wraps
+from itsdangerous import BadSignature
+
 
 import math
 from datetime import date, datetime, time, timedelta, timezone
@@ -19,6 +22,39 @@ from app.services.thresholds import evaluate, log_alerts
 
 
 main = Blueprint("main", __name__)
+# ==========================================
+# ADMIN AUTHORIZATION
+# ==========================================
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+
+        auth_header = request.headers.get("Authorization", "")
+
+        if not auth_header.startswith("Bearer "):
+            return jsonify(message="Authentication required"), 401
+
+        token = auth_header.split(" ", 1)[1]
+
+        serializer = URLSafeTimedSerializer(
+            current_app.config["SECRET_KEY"],
+            salt="swams-auth"
+        )
+
+        try:
+            data = serializer.loads(token, max_age=28800)
+            user = db.session.get(User, data.get("user_id"))
+
+        except BadSignature:
+            return jsonify(message="Invalid or expired token"), 401
+
+        if user is None or user.role != "admin":
+            return jsonify(message="Admin access required"), 403
+
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 # ==========================================
@@ -371,4 +407,86 @@ def login():
         "username": user.username,
         "role": user.role
         }
+    ), 200
+
+# ==========================================
+# ADMIN SETTINGS - GET THRESHOLDS
+# ==========================================
+
+@main.get("/api/settings/thresholds")
+@admin_required
+def get_threshold_settings():
+
+    thresholds = Threshold.query.all()
+
+    return jsonify({
+        item.parameter: {
+            "safe_min": item.safe_min,
+            "safe_max": item.safe_max
+        }
+        for item in thresholds
+    })
+
+# ==========================================
+# ADMIN SETTINGS - UPDATE THRESHOLDS
+# ==========================================
+
+@main.put("/api/settings/thresholds")
+@admin_required
+def update_threshold_settings():
+
+    data = request.get_json(silent=True) or {}
+
+    allowed_parameters = ("ph", "temperature", "turbidity")
+
+    for parameter in allowed_parameters:
+
+        if parameter not in data:
+            continue
+
+        values = data[parameter]
+
+        if not isinstance(values, dict):
+            return jsonify(message=f"Invalid settings for {parameter}"), 400
+
+        try:
+            safe_min = float(values["safe_min"])
+            safe_max = float(values["safe_max"])
+        except (KeyError, TypeError, ValueError):
+            return jsonify(message=f"Invalid range for {parameter}"), 400
+
+        if not math.isfinite(safe_min) or not math.isfinite(safe_max):
+            return jsonify(message="Values must be finite numbers"), 400
+
+        if safe_min >= safe_max:
+            return jsonify(
+                message=f"Minimum must be lower than maximum for {parameter}"
+            ), 400
+
+        if parameter == "ph" and (safe_min < 0 or safe_max > 14):
+            return jsonify(message="pH must be between 0 and 14"), 400
+
+        if parameter == "temperature" and (
+            safe_min < -10 or safe_max > 60
+        ):
+            return jsonify(message="Invalid temperature range"), 400
+
+        if parameter == "turbidity" and safe_min < 0:
+            return jsonify(message="Turbidity cannot be negative"), 400
+
+        threshold = Threshold.query.filter_by(
+            parameter=parameter
+        ).first()
+
+        if threshold is None:
+            threshold = Threshold(parameter=parameter)
+            db.session.add(threshold)
+
+        threshold.safe_min = safe_min
+        threshold.safe_max = safe_max
+
+    db.session.commit()
+
+    return jsonify(
+        message="Threshold settings saved successfully"
     ), 200
