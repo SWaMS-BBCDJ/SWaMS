@@ -1,10 +1,10 @@
-from itsdangerous import URLSafeTimedSerializer
+
+from itsdangerous import URLSafeTimedSerializer, BadSignature
 from app.models import User
 from functools import wraps
-from itsdangerous import BadSignature
 import re
-
 import math
+
 from datetime import date, datetime, time, timedelta, timezone
 
 from flask import (
@@ -17,40 +17,97 @@ from flask import (
 from sqlalchemy import func
 
 from app import db
-from app.models import AlertLog, Pond, Reading, Threshold
+from app.models import AlertLog, LiveReading, Pond, Reading, Threshold
 from app.services.thresholds import evaluate, log_alerts
 
 
 main = Blueprint("main", __name__)
+
+
 # ==========================================
-# ADMIN AUTHORIZATION
+# USER AUTHORIZATION
 # ==========================================
 
-def admin_required(f):
+def get_authenticated_user():
+    """Validate the Bearer token and return the authenticated user."""
+
+    auth_header = request.headers.get("Authorization", "")
+
+    if not auth_header.startswith("Bearer "):
+        print("AUTH DEBUG: Missing or invalid Authorization header")
+        return None, (jsonify(message="Authentication required"), 401)
+
+    token = auth_header.split(" ", 1)[1]
+
+    serializer = URLSafeTimedSerializer(
+        current_app.config["SECRET_KEY"],
+        salt="swams-auth"
+    )
+
+    try:
+        data = serializer.loads(token, max_age=28800)
+        user = db.session.get(User, data.get("user_id"))
+
+    except BadSignature:
+        print("AUTH DEBUG: Invalid or expired token")
+        return None, (jsonify(message="Invalid or expired token"), 401)
+
+    if user is None:
+        print("AUTH DEBUG: User not found")
+        return None, (jsonify(message="User not found"), 401)
+
+    return user, None
+
+
+def token_required(f):
+    """Allow any authenticated user."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
 
-        auth_header = request.headers.get("Authorization", "")
+        user, error = get_authenticated_user()
 
-        if not auth_header.startswith("Bearer "):
-            return jsonify(message="Authentication required"), 401
+        if error:
+            return error
 
-        token = auth_header.split(" ", 1)[1]
+        print("\n========== TOKEN ACCESS GRANTED ==========")
+        print("PATH:", request.path)
+        print("ENDPOINT:", request.endpoint)
+        print("USER:", user.username)
+        print("ROLE:", user.role)
+        print("==========================================\n")
 
-        serializer = URLSafeTimedSerializer(
-            current_app.config["SECRET_KEY"],
-            salt="swams-auth"
-        )
+        return f(*args, **kwargs)
 
-        try:
-            data = serializer.loads(token, max_age=28800)
-            user = db.session.get(User, data.get("user_id"))
+    return decorated
 
-        except BadSignature:
-            return jsonify(message="Invalid or expired token"), 401
 
-        if user is None or user.role != "admin":
+def admin_required(f):
+    """Allow administrators only."""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+
+        user, error = get_authenticated_user()
+
+        if error:
+            return error
+
+        if user.role != "admin":
+
+            print("\n========== ADMIN ACCESS DENIED ==========")
+            print("PATH:", request.path)
+            print("ENDPOINT:", request.endpoint)
+            print("USER:", user.username)
+            print("ROLE:", user.role)
+            print("=========================================\n")
+
             return jsonify(message="Admin access required"), 403
+
+        print("\n========== ADMIN ACCESS GRANTED ==========")
+        print("PATH:", request.path)
+        print("USER:", user.username)
+        print("==========================================\n")
 
         return f(*args, **kwargs)
 
@@ -60,8 +117,8 @@ def admin_required(f):
 # ==========================================
 # ALERT FILTER HELPERS
 # ==========================================
+
 def parse_date(value):
-    """Parse a YYYY-MM-DD date; return None if invalid."""
     if not value:
         return None
 
@@ -72,7 +129,7 @@ def parse_date(value):
 
 
 def build_alert_query(start_date=None, end_date=None, parameter=None):
-    """Build a reusable query for filtered alert records."""
+
     query = AlertLog.query
 
     if start_date:
@@ -80,7 +137,6 @@ def build_alert_query(start_date=None, end_date=None, parameter=None):
         query = query.filter(AlertLog.sent_at >= start_datetime)
 
     if end_date:
-        # Exclusive next-day boundary includes the entire end date.
         end_datetime = datetime.combine(
             end_date + timedelta(days=1),
             time.min,
@@ -98,16 +154,7 @@ def build_alert_query(start_date=None, end_date=None, parameter=None):
 
 
 def get_alert_date_range():
-    """
-    Supported modes:
-      today
-      7days
-      28days
-      custom
 
-    Custom mode expects from=YYYY-MM-DD and to=YYYY-MM-DD.
-    Dates use the server's local calendar date.
-    """
     today = date.today()
     period = request.args.get("period", "7days").strip().lower()
 
@@ -121,6 +168,7 @@ def get_alert_date_range():
         return today - timedelta(days=27), today, None
 
     if period == "custom":
+
         start_date = parse_date(request.args.get("from"))
         end_date = parse_date(request.args.get("to"))
 
@@ -139,7 +187,7 @@ def get_alert_date_range():
 
 
 def serialize_alert(alert):
-    """Convert an alert database record to a JSON-safe dictionary."""
+
     return {
         "id": alert.id,
         "parameter": alert.parameter,
@@ -155,14 +203,15 @@ def serialize_alert(alert):
 # ==========================================
 # DASHBOARD
 # ==========================================
+
 @main.get("/")
 def dashboard():
+
     latest_reading = Reading.query.order_by(
         Reading.timestamp.desc(),
         Reading.id.desc(),
     ).first()
 
-    # Pass dictionaries, not SQLAlchemy model objects, to templates.
     thresholds = {
         item.parameter.lower(): {
             "safe_min": item.safe_min,
@@ -181,6 +230,7 @@ def dashboard():
 # ==========================================
 # HEALTH CHECK
 # ==========================================
+
 @main.get("/api/health")
 def health():
     return jsonify(status="ok")
@@ -189,39 +239,44 @@ def health():
 # ==========================================
 # LATEST SENSOR READING
 # ==========================================
+
+
 @main.get("/api/readings/latest")
 def latest():
-    reading = Reading.query.order_by(
-        Reading.timestamp.desc(),
-        Reading.id.desc(),
+
+    reading = LiveReading.query.order_by(
+        LiveReading.timestamp.desc(),
+        LiveReading.id.desc(),
     ).first()
 
     if reading is None:
         return jsonify(
             readings=[],
-            message="no data yet",
-        )
+            message="no live data yet",
+        ), 404
 
     return jsonify(
         ph=reading.ph,
         temperature=reading.temperature,
         turbidity=reading.turbidity,
-        timestamp=reading.timestamp.isoformat(),
-        is_anomalous=bool(reading.is_anomalous),
+        timestamp=reading.timestamp.isoformat() + "Z",
+        is_anomalous=False,
     )
+
 
 
 # ==========================================
 # HISTORICAL SENSOR READINGS
 # ==========================================
+
 @main.get("/api/readings/history")
 def history():
+
     rows = Reading.query.order_by(
         Reading.timestamp.desc(),
         Reading.id.desc(),
     ).limit(500).all()
 
-    # Chart expects oldest-to-newest ordering.
     rows.reverse()
 
     return jsonify([
@@ -238,20 +293,10 @@ def history():
 # ==========================================
 # FILTERED ALERT HISTORY API
 # ==========================================
+
 @main.get("/api/alerts")
 def alerts():
-    """
-    Examples:
-      /api/alerts?period=today
-      /api/alerts?period=7days
-      /api/alerts?period=28days
-      /api/alerts?period=custom&from=2026-10-01&to=2026-10-19
 
-    Optional parameters:
-      parameter=ph|temperature|turbidity
-      page=1
-      per_page=10
-    """
     start_date, end_date, error = get_alert_date_range()
 
     if error:
@@ -262,10 +307,10 @@ def alerts():
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = int(request.args.get("per_page", 10))
+
     except (TypeError, ValueError):
         return jsonify(error="page and per_page must be integers"), 400
 
-    # Prevent unexpectedly large responses.
     per_page = min(max(per_page, 1), 100)
 
     query = build_alert_query(
@@ -296,8 +341,10 @@ def alerts():
 # ==========================================
 # RECEIVE SENSOR DATA FROM ESP32
 # ==========================================
+
 @main.post("/api/readings")
 def ingest():
+
     key = request.headers.get("X-Device-Key")
 
     if key != current_app.config["DEVICE_API_KEY"]:
@@ -309,12 +356,12 @@ def ingest():
         ph = float(data["ph"])
         temperature = float(data["temperature"])
         turbidity = float(data["turbidity"])
+
     except (KeyError, TypeError, ValueError):
         return jsonify(
             error="ph, temperature and turbidity are required numbers"
         ), 400
 
-    # Reject NaN and infinity.
     if not all(math.isfinite(value) for value in (
         ph, temperature, turbidity
     )):
@@ -340,16 +387,78 @@ def ingest():
     if pond is None:
         return jsonify(error="no pond configured"), 409
 
-    reading = Reading(
-        pond_id=pond.id,
-        timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
-        ph=ph,
-        temperature=temperature,
-        turbidity=turbidity,
+    
+    # Current measurement timestamp
+    measurement_time = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # ==========================================
+    # 1. UPDATE LIVE READING
+    # ==========================================
+
+    live_reading = LiveReading.query.filter_by(
+        pond_id=pond.id
+    ).first()
+
+    if live_reading is None:
+        live_reading = LiveReading(
+            pond_id=pond.id,
+            timestamp=measurement_time,
+            ph=ph,
+            temperature=temperature,
+            turbidity=turbidity,
+        )
+
+        db.session.add(live_reading)
+
+    else:
+        live_reading.timestamp = measurement_time
+        live_reading.ph = ph
+        live_reading.temperature = temperature
+        live_reading.turbidity = turbidity
+
+    # ==========================================
+    # 2. FIND CURRENT HOURLY RECORD
+    # ==========================================
+
+    hour_start = measurement_time.replace(
+        minute=0,
+        second=0,
+        microsecond=0
     )
 
-    db.session.add(reading)
+    hour_end = hour_start + timedelta(hours=1)
+
+    reading = Reading.query.filter(
+        Reading.pond_id == pond.id,
+        Reading.timestamp >= hour_start,
+        Reading.timestamp < hour_end,
+    ).first()
+
+    # ==========================================
+    # 3. CREATE OR UPDATE HOURLY RECORD
+    # ==========================================
+
+    if reading is None:
+
+        reading = Reading(
+            pond_id=pond.id,
+            timestamp=measurement_time,
+            ph=ph,
+            temperature=temperature,
+            turbidity=turbidity,
+        )
+
+        db.session.add(reading)
+
+    else:
+
+        reading.timestamp = measurement_time
+        reading.ph = ph
+        reading.temperature = temperature
+        reading.turbidity = turbidity
+
     db.session.flush()
+
 
     breaches = evaluate({
         "ph": ph,
@@ -377,8 +486,10 @@ def ingest():
 # ==========================================
 # USER AUTHENTICATION
 # ==========================================
+
 @main.post("/api/auth/login")
 def login():
+
     data = request.get_json(silent=True) or {}
 
     username = str(data.get("username", "")).strip()
@@ -400,35 +511,41 @@ def login():
     token = serializer.dumps({"user_id": user.id})
 
     return jsonify(
-    message="Login successful",
-    token=token,
-    user={
-        "id": user.id,
-        "username": user.username,
-        "role": user.role
+        message="Login successful",
+        token=token,
+        user={
+            "id": user.id,
+            "username": user.username,
+            "role": user.role
         }
     ), 200
 
+
 # ==========================================
-# ADMIN SETTINGS - GET THRESHOLDS
+# GET THRESHOLDS
+# ADMIN AND OPERATOR CAN VIEW
 # ==========================================
 
 @main.get("/api/settings/thresholds")
-@admin_required
+@token_required
 def get_threshold_settings():
 
     thresholds = Threshold.query.all()
 
-    return jsonify({
-        item.parameter: {
+    result = {
+        item.parameter.lower(): {
             "safe_min": item.safe_min,
             "safe_max": item.safe_max
         }
         for item in thresholds
-    })
+    }
+
+    return jsonify(result), 200
+
 
 # ==========================================
-# ADMIN SETTINGS - UPDATE THRESHOLDS
+# UPDATE THRESHOLDS
+# ADMIN ONLY
 # ==========================================
 
 @main.put("/api/settings/thresholds")
@@ -452,6 +569,7 @@ def update_threshold_settings():
         try:
             safe_min = float(values["safe_min"])
             safe_max = float(values["safe_max"])
+
         except (KeyError, TypeError, ValueError):
             return jsonify(message=f"Invalid range for {parameter}"), 400
 
@@ -491,11 +609,13 @@ def update_threshold_settings():
         message="Threshold settings saved successfully"
     ), 200
 
+
 # ==========================================
-# ADMIN SETTINGS - OPERATOR MOBILE NUMBER
+# OPERATOR ACCOUNT HELPER
 # ==========================================
 
 def get_operator_account():
+
     operators = User.query.filter_by(role="operator").all()
 
     if not operators:
@@ -516,9 +636,15 @@ def get_operator_account():
     return operators[0], None
 
 
+# ==========================================
+# GET OPERATOR MOBILE NUMBER
+# ADMIN ONLY
+# ==========================================
+
 @main.get("/api/settings/operator-mobile")
 @admin_required
 def get_operator_mobile():
+
     operator, error = get_operator_account()
 
     if error:
@@ -530,10 +656,17 @@ def get_operator_mobile():
     ), 200
 
 
+# ==========================================
+# UPDATE OPERATOR MOBILE NUMBER
+# ADMIN ONLY
+# ==========================================
+
 @main.put("/api/settings/operator-mobile")
 @admin_required
 def update_operator_mobile():
+
     data = request.get_json(silent=True) or {}
+
     mobile_number = str(data.get("mobile_number", "")).strip()
 
     if not re.fullmatch(r"\+639\d{9}", mobile_number):
@@ -548,6 +681,7 @@ def update_operator_mobile():
         return error
 
     operator.mobile_number = mobile_number
+
     db.session.commit()
 
     return jsonify(

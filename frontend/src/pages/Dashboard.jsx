@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+// Dashboard components
 import Header from "../components/Header";
 import StatusBanner from "../components/StatusBanner";
 import MetricCard from "../components/MetricCard";
@@ -8,17 +9,25 @@ import Alerts from "../components/Alerts";
 import LogsTable from "../components/LogsTable";
 import DateFilter from "../components/DateFilter";
 import TrendChart from "../components/TrendChart";
-import "../styles/Dashboard.css";
 import LatestReading from "../components/LatestReading";
 
+// Dashboard styles
+import "../styles/Dashboard.css";
 import "../styles/index.css";
 
-const API_URL = "http://localhost:5000/api/readings/history";
+// Backend API functions
+import {
+  getReadingHistory,
+  getLatestReading,
+  getThresholds,
+} from "../services/api";
+
 
 /* =========================================================
-   DATE FUNCTIONS
+   1. DATE FUNCTIONS
    ========================================================= */
 
+// Convert timestamps into YYYY-MM-DD format.
 function getCalendarDate(timestamp) {
   if (!timestamp) return "";
 
@@ -39,6 +48,7 @@ function getCalendarDate(timestamp) {
   ).padStart(2, "0")}`;
 }
 
+// Check if a reading belongs to the selected date range.
 function isWithinDateRange(timestamp, startDate, endDate) {
   const date = getCalendarDate(timestamp);
 
@@ -49,11 +59,14 @@ function isWithinDateRange(timestamp, startDate, endDate) {
   );
 }
 
+
 /* =========================================================
-   SENSOR STATUS
+   2. SENSOR STATUS CALCULATION
    ========================================================= */
 
+// Compare sensor readings with database thresholds.
 function getParameterStatus(parameter, value, limits) {
+
   if (
     value == null ||
     value === "" ||
@@ -67,11 +80,15 @@ function getParameterStatus(parameter, value, limits) {
   const min = Number(limits.safe_min);
   const max = Number(limits.safe_max);
 
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+  if (
+    !Number.isFinite(min) ||
+    !Number.isFinite(max) ||
+    min >= max
+  ) {
     return "NOT EVALUATED";
   }
 
-  // Physical sensor validation
+  // Validate physical sensor values.
   if (parameter === "ph" && (v < 0 || v > 14)) {
     return "NOT EVALUATED";
   }
@@ -84,12 +101,12 @@ function getParameterStatus(parameter, value, limits) {
     return "NOT EVALUATED";
   }
 
-  // Outside database safe range
+  // Danger: outside configured safe range.
   if (v < min || v > max) {
     return "DANGER";
   }
 
-  // Warning when close to either safe boundary.
+  // Warning: close to either safe boundary.
   const warningMargin = (max - min) * 0.1;
 
   if (
@@ -102,53 +119,69 @@ function getParameterStatus(parameter, value, limits) {
   return "SAFE";
 }
 
+
 /* =========================================================
-   OVERALL WATER QUALITY STATUS
+   3. OVERALL WATER QUALITY STATUS
    ========================================================= */
 
 function getOverallStatus(statuses) {
-  if (statuses.includes("DANGER")) return "DANGER";
 
-  if (statuses.includes("WARNING")) return "WARNING";
+  if (statuses.includes("DANGER")) {
+    return "DANGER";
+  }
 
-  if (statuses.every((s) => s === "SAFE")) {
+  if (statuses.includes("WARNING")) {
+    return "WARNING";
+  }
+
+  if (statuses.every((status) => status === "SAFE")) {
     return "SAFE";
   }
 
   return "NOT EVALUATED";
 }
 
+
 /* =========================================================
-   CREATE ALERTS FROM A READING
+   4. GENERATE ALERTS
    ========================================================= */
 
+// Create alerts from individual sensor readings.
 function createAlerts(reading, statuses) {
+
   if (!reading) return [];
 
   const result = [];
   const recordedAt = reading.recordedAt;
 
-  [
-    ["PH", Number(reading.ph), statuses.phStatus, ""],
-
+  const parameters = [
+    [
+      "PH",
+      reading.ph,
+      statuses.phStatus,
+      "",
+    ],
     [
       "TEMPERATURE",
-      Number(reading.temperature),
+      reading.temperature,
       statuses.temperatureStatus,
       "°C",
     ],
-
     [
       "TURBIDITY",
-      Number(reading.turbidity),
+      reading.turbidity,
       statuses.turbidityStatus,
       " NTU",
     ],
+  ];
 
-  ].forEach(([parameter, value, status, unit]) => {
+  parameters.forEach(([parameter, rawValue, status, unit]) => {
 
     if (status === "SAFE") return;
 
+    const value = Number(rawValue);
+
+    // CHANGED: Do not format invalid sensor values with toFixed().
     const shown =
       status === "NOT EVALUATED"
         ? "--"
@@ -157,8 +190,11 @@ function createAlerts(reading, statuses) {
           : `${value.toFixed(1)}${unit}`;
 
     result.push({
+
       id: `${parameter}-${recordedAt}`,
+
       parameter,
+
       value: shown,
 
       severity:
@@ -174,50 +210,68 @@ function createAlerts(reading, statuses) {
             : `${parameter} is approaching a configured limit.`,
 
       recordedAt,
+
     });
+
   });
 
   return result;
 }
 
+
 /* =========================================================
-   DASHBOARD COMPONENT
+   5. DASHBOARD COMPONENT
    ========================================================= */
 
 function Dashboard() {
 
+  // Sensor readings from Flask.
   const [readings, setReadings] = useState([]);
+
+  // Latest live reading from the LiveReading database table.
+  const [latestLiveReading, setLatestLiveReading] = useState(null);
+
+  // Error specifically for the live-reading connection.
+  const [liveError, setLiveError] = useState("");
+
+  // Thresholds from Flask database.
   const [thresholds, setThresholds] = useState(null);
+
+  // Loading and error messages.
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [thresholdError, setThresholdError] = useState("");
 
+  // Date filter states.
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
+  // Selected historical sensor chart.
   const [selectedParameter, setSelectedParameter] =
     useState("ph");
-  
-  
+
 
   /* =======================================================
-     FETCH SENSOR READINGS
-     Refresh every 10 seconds
+     6. FETCH SENSOR READINGS
+
+     CHANGED:
+     Uses getReadingHistory() from services/api.js.
+
+     Endpoint:
+     GET /api/readings/history
+
+     Automatically refreshes every 10 seconds.
      ======================================================= */
 
   useEffect(() => {
+
     let active = true;
 
     async function fetchReadings() {
+
       try {
-        const response = await fetch(API_URL);
 
-        if (!response.ok) {
-          throw new Error("Could not retrieve readings.");
-        }
-
-        const data = await response.json();
+        const data = await getReadingHistory();
 
         if (!Array.isArray(data)) {
           throw new Error("Invalid backend response.");
@@ -225,198 +279,271 @@ function Dashboard() {
 
         if (!active) return;
 
-        setReadings(
-          data.map((r) => ({
-            ...r,
+        // Normalize the timestamp field.
+        const normalizedReadings = data.map((reading) => ({
 
-            recordedAt:
-              r.t ??
-              r.timestamp ??
-              r.recordedAt ??
-              r.recorded_at ?? 
-              r.created_at ??
-              null,
-          }))
+          ...reading,
+
+          recordedAt:
+            reading.t ??
+            reading.timestamp ??
+            reading.recordedAt ??
+            reading.recorded_at ??
+            reading.created_at ??
+            null,
+
+        }));
+
+        // Sort readings from oldest to newest.
+        normalizedReadings.sort((a, b) => {
+
+          return (
+            new Date(a.recordedAt).getTime() -
+            new Date(b.recordedAt).getTime()
+          );
+
+        });
+
+        setReadings(
+          data
+            .map((r) => ({
+              ...r,
+              recordedAt:
+                r.t ??
+                r.timestamp ??
+                r.recordedAt ??
+                r.recorded_at ??
+                r.created_at ??
+                null,
+            }))
+            .filter((r) => r.recordedAt)
+            .sort(
+              (a, b) =>
+                new Date(a.recordedAt) - new Date(b.recordedAt)
+            )
         );
 
         setError("");
 
-      } catch {
+      } catch (error) {
+
         if (active) {
+
           setError(
-            "Unable to connect to the backend. Check that it is running."
+            "Unable to retrieve sensor readings: " +
+            error.message
           );
+
         }
 
       } finally {
+
         if (active) {
           setLoading(false);
         }
+
       }
+
     }
 
+    // Fetch immediately when dashboard opens.
     fetchReadings();
 
+    // Refresh every 10 seconds.
     const timer = setInterval(fetchReadings, 10000);
 
     return () => {
+
       active = false;
+
       clearInterval(timer);
+
     };
 
   }, []);
 
+
+  /* =======================================================
+     7. FETCH SENSOR THRESHOLDS
+
+     CHANGED:
+     Uses getThresholds() from services/api.js.
+
+     Endpoint:
+     GET /api/settings/thresholds
+
+     This is a separate useEffect.
+     Do not place another useEffect inside it.
+     ======================================================= */
+
   useEffect(() => {
-  let active = true;
 
-  async function fetchThresholds() {
+    let active = true;
+
+    async function fetchThresholds() {
+
       try {
-        const token = localStorage.getItem("token");
 
-        const response = await fetch(
-          "http://localhost:5000/api/settings/thresholds",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Could not load thresholds (${response.status})`
-          );
-        }
-
-        const data = await response.json();
+        const data = await getThresholds();
 
         if (active) {
+
           setThresholds(data);
+
           setThresholdError("");
+
         }
+
       } catch (error) {
+
         if (active) {
+
           setThresholdError(error.message);
+
         }
+
       }
+
     }
 
     fetchThresholds();
 
     return () => {
+
       active = false;
+
     };
+
   }, []);
 
-  /* =======================================================
-     LATEST SENSOR READING
 
-     Independent of date filter.
-     Always displays the newest sensor reading.
+  /* =======================================================
+     8. GET LATEST SENSOR READING
+
+     Independent of date filtering.
+     Always uses the newest historical reading.
      ======================================================= */
 
-  const latestReading = readings.length
-  ? [...readings].sort((a, b) => {
-      const dateA = new Date(a.recordedAt).getTime();
-      const dateB = new Date(b.recordedAt).getTime();
-
-      return dateB - dateA;
-    })[0]
-  : null;
-
-  const latestReadingAge = latestReading?.recordedAt
-  ? Date.now() - new Date(latestReading.recordedAt).getTime()
-  : Infinity;
-
-  const isReceivingReadings =
-  latestReadingAge >= 0 &&
-  latestReadingAge <= 30000;
-
-  const liveReading = isReceivingReadings
-  ? latestReading
-  : null;
-
-  const latestReadingStatus = liveReading
-  ? "receiving"
-  : "not-receiving";
-
   
+/* =======================================================
+   8. LATEST LIVE SENSOR READING
+
+   Uses the separate LiveReading endpoint instead of
+   relying on historical hourly records.
+
+   The latest values remain visible even if the sensor
+   stops sending data. The status indicates whether
+   the latest reading is still considered live.
+   ======================================================= */
+
+  const liveReading = latestLiveReading;
+
+  const latestReadingAge = liveReading?.timestamp
+    ? Date.now() - new Date(liveReading.timestamp).getTime()
+    : Infinity;
+
+  // A reading received within 30 seconds is considered live.
+  const isReceivingReadings =
+    Number.isFinite(latestReadingAge) &&
+    latestReadingAge >= 0 &&
+    latestReadingAge <= 30000;
+
+  const latestReadingStatus = isReceivingReadings
+    ? "receiving"
+    : "not-receiving";
+
 
   /* =======================================================
-     DATE-FILTERED READINGS
+     9. DATE-FILTERED SENSOR READINGS
 
-     This is the main filtered data used by:
-     1. Sensor charts
-     2. Logs
-     3. Alerts
+     Used by:
+     - Historical chart
+     - Logs
+     - Alerts
+
+     Does not affect live sensor readings.
      ======================================================= */
 
   const filteredReadings = useMemo(() => {
 
     return readings.filter((reading) =>
+
       isWithinDateRange(
         reading.recordedAt,
         startDate,
         endDate
       )
+
     );
 
   }, [readings, startDate, endDate]);
 
-  /* =======================================================
-     FILTERED LOGS
 
-     Show only the latest 5 readings within the date range.
+  /* =======================================================
+     10. LATEST FIVE LOG RECORDS
      ======================================================= */
 
   const latestLogs = useMemo(() => {
 
-    return filteredReadings.slice(-5).reverse();
+    return [...filteredReadings]
+
+      .sort((a, b) => {
+
+        return (
+          new Date(b.recordedAt).getTime() -
+          new Date(a.recordedAt).getTime()
+        );
+
+      })
+
+      .slice(0, 5);
 
   }, [filteredReadings]);
 
-  /* =======================================================
-     LATEST SENSOR STATUS
 
-     These statuses are based on the actual latest reading,
-     not the date-filtered readings.
+  /* =======================================================
+     11. LATEST SENSOR STATUS
+
+     Compare the latest readings with database thresholds.
      ======================================================= */
 
+  
   const phStatus = getParameterStatus(
     "ph",
-    liveReading?.ph,
+    isReceivingReadings ? liveReading?.ph : null,
     thresholds?.ph
   );
 
   const temperatureStatus = getParameterStatus(
     "temperature",
-    liveReading?.temperature,
+    isReceivingReadings ? liveReading?.temperature : null,
     thresholds?.temperature
   );
 
   const turbidityStatus = getParameterStatus(
     "turbidity",
-    liveReading?.turbidity,
+    isReceivingReadings ? liveReading?.turbidity : null,
     thresholds?.turbidity
   );
 
+
   /* =======================================================
-     OVERALL STATUS
+     12. OVERALL WATER QUALITY STATUS
      ======================================================= */
 
-  const overallStatus = !liveReading
-  ? "NOT EVALUATED"
-  : getOverallStatus([
-      phStatus,
-      temperatureStatus,
-      turbidityStatus,
-    ]);
+  const overallStatus = !isReceivingReadings
+    ? "NOT EVALUATED"
+    : getOverallStatus([
+        phStatus,
+        temperatureStatus,
+        turbidityStatus,
+      ]);
+
 
   /* =======================================================
-     DATE-FILTERED ALERTS
+     13. GENERATE DATE-FILTERED ALERTS
 
-     Generate alerts from ALL readings within the selected
-     date range, not just the latest sensor reading.
+     Checks all readings within the selected date range.
      ======================================================= */
 
   const currentAlerts = useMemo(() => {
@@ -451,77 +578,107 @@ function Dashboard() {
 
   }, [filteredReadings, thresholds]);
 
+
   /* =======================================================
-     CHART LABELS
+     14. CHART LABELS
      ======================================================= */
 
   const chartLabels = {
+
     ph: "pH READINGS",
+
     turbidity: "TURBIDITY READINGS",
+
     temperature: "TEMPERATURE READINGS",
+
   };
 
+
   /* =======================================================
-     CLEAR DATE FILTER
+     15. CLEAR DATE FILTER
      ======================================================= */
 
   function clearDateFilter() {
+
     setStartDate("");
+
     setEndDate("");
+
   }
 
+
   /* =======================================================
-     DASHBOARD UI
+     16. DASHBOARD UI
      ======================================================= */
 
   return (
+
     <div className="app">
 
       <main className="dashboard-main">
 
         {/* HEADER */}
-
         <Header />
 
-        {/* LOADING MESSAGE */}
 
+        {/* LOADING MESSAGE */}
         {loading && (
           <p>Loading water-quality readings...</p>
         )}
 
-        {/* ERROR MESSAGE */}
 
+        {/* SENSOR READING ERROR */}
         {error && (
           <p role="alert">
             {error}
           </p>
         )}
 
+
+        {/* THRESHOLD ERROR */}
         {thresholdError && (
           <p role="alert">
             Unable to load thresholds: {thresholdError}
           </p>
         )}
 
-        {/* EMPTY READINGS */}
 
+        {/* EMPTY READINGS */}
         {!loading && !error && readings.length === 0 && (
           <p>No readings have been recorded yet.</p>
         )}
 
-        {/* OVERALL WATER QUALITY STATUS */}
+
+        {/* ============================================
+            OVERALL WATER QUALITY STATUS
+            ============================================ */}
 
         <div className="status-summary-grid">
+
           <StatusBanner status={overallStatus} />
 
-          <LatestReading reading={liveReading}  status={latestReadingStatus} />
+          <LatestReading
+            reading={liveReading}
+            status={latestReadingStatus}
+          />
+
         </div>
 
-        {/* SENSOR METRIC CARDS */}
+
+        {/* ============================================
+            LIVE SENSOR READINGS
+            ============================================ */}
 
         <section className="live-readings">
+          {liveError && (
+            <p role="alert">
+              {liveError}
+            </p>
+          )}
 
-                <h2 className="section-heading">LIVE SENSOR READINGS</h2>
+          <h2 className="section-heading">
+            LIVE SENSOR READINGS
+          </h2>
 
           <div className="status-grid">
 
@@ -535,6 +692,7 @@ function Dashboard() {
               status={phStatus}
             />
 
+
             <MetricCard
               title="TEMPERATURE"
               value={
@@ -545,6 +703,7 @@ function Dashboard() {
               unit="°C"
               status={temperatureStatus}
             />
+
 
             <MetricCard
               title="TURBIDITY"
@@ -561,18 +720,27 @@ function Dashboard() {
 
         </section>
 
-        {/* DATE FILTER */}
+
+        {/* ============================================
+            DATE FILTER
+            ============================================ */}
 
         <DateFilter
+
           startDate={startDate}
+
           endDate={endDate}
+
           onStartDateChange={setStartDate}
+
           onEndDateChange={setEndDate}
+
         />
 
-        {/* CLEAR FILTER */}
 
+        {/* CLEAR DATE FILTER */}
         {(startDate || endDate) && (
+
           <button
             type="button"
             className="clear-filter-button"
@@ -580,21 +748,24 @@ function Dashboard() {
           >
             Clear Date Filter
           </button>
+
         )}
 
-        {/* MAIN DASHBOARD CONTENT */}
+
+        {/* ============================================
+            MAIN DASHBOARD CONTENT
+            ============================================ */}
 
         <section className="dashboard-content-grid">
 
-          {/* ============================================
-              LEFT COLUMN - SENSOR READINGS
-              ============================================ */}
+
+          {/* ==========================================
+              LEFT COLUMN - HISTORICAL CHARTS
+              ========================================== */}
 
           <div className="sensor-charts-column">
 
             <div className="sensor-chart-section">
-
-              {/* CHART HEADER */}
 
               <div className="sensor-chart-header">
 
@@ -608,8 +779,8 @@ function Dashboard() {
 
                 </div>
 
-                {/* SENSOR SELECTOR */}
 
+                {/* SENSOR SELECTOR */}
                 <div className="sensor-selector">
 
                   <button
@@ -624,6 +795,7 @@ function Dashboard() {
                     pH
                   </button>
 
+
                   <button
                     type="button"
                     className={
@@ -637,6 +809,7 @@ function Dashboard() {
                   >
                     Turbidity
                   </button>
+
 
                   <button
                     type="button"
@@ -656,25 +829,33 @@ function Dashboard() {
 
               </div>
 
-              {/* SENSOR TREND CHART */}
 
+              {/* HISTORICAL SENSOR TREND CHART */}
               <TrendChart
+
                 readings={filteredReadings}
+
                 parameter={selectedParameter}
+
                 label={chartLabels[selectedParameter]}
+
               />
 
             </div>
 
           </div>
 
-          {/* ============================================
+
+          {/* ==========================================
               RIGHT COLUMN - LOGS AND ALERTS
-              ============================================ */}
+              ========================================== */}
 
           <div className="monitoring-column">
 
-            {/* LOGS */}
+
+            {/* ========================================
+                LOGS
+                ======================================== */}
 
             <div className="panel dashboard-logs-panel">
 
@@ -693,14 +874,19 @@ function Dashboard() {
               <LogsTable readings={latestLogs} />
 
               {latestLogs.length === 0 && (
+
                 <p className="filter-empty-message">
                   No logs found for the selected date range.
                 </p>
+
               )}
 
             </div>
 
-            {/* ALERTS */}
+
+            {/* ========================================
+                ALERTS
+                ======================================== */}
 
             <div className="panel dashboard-alerts-panel">
 
@@ -719,9 +905,11 @@ function Dashboard() {
               <Alerts alerts={currentAlerts} />
 
               {currentAlerts.length === 0 && (
+
                 <p className="filter-empty-message">
                   No alerts found for the selected date range.
                 </p>
+
               )}
 
             </div>
@@ -733,7 +921,9 @@ function Dashboard() {
       </main>
 
     </div>
+
   );
+
 }
 
 export default Dashboard;

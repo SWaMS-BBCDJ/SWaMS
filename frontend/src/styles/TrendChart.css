@@ -1,7 +1,8 @@
+
 /* =========================================================
-   TREND CHART (sensor chart section, selector, chart panel)
-   Import in components/TrendChart.jsx:
-   import "../styles/TrendChart.css";
+   TREND CHART
+   Sensor chart section, selector and chart panel
+   Existing colors preserved
    ========================================================= */
 
 .sensor-chart-section {
@@ -17,6 +18,7 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sensor-chart-header {
@@ -26,6 +28,7 @@
   gap: 18px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
 .sensor-chart-heading p {
@@ -35,7 +38,9 @@
   line-height: 1.5;
 }
 
-/* Sensor selector */
+/* =========================================================
+   SENSOR SELECTOR
+   ========================================================= */
 
 .sensor-selector {
   width: fit-content;
@@ -47,6 +52,7 @@
   padding: 5px;
   background: #F1F5F9;
   border-radius: 9px;
+  box-sizing: border-box;
 }
 
 .sensor-selector button {
@@ -60,6 +66,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .sensor-selector button:hover {
@@ -74,14 +81,32 @@
   box-shadow: 0 2px 6px rgba(40, 115, 77, 0.2);
 }
 
-/* Chart itself */
+.sensor-selector button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   CHART COLUMN
+   ========================================================= */
+
+.sensor-charts-column {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   CHART PANEL
+   ========================================================= */
 
 .sensor-charts-column .chart-panel {
   position: relative;
   width: 100%;
   min-width: 0;
   min-height: 310px;
-  height: 100%;
   flex: 1;
   margin-top: 15px;
   display: flex;
@@ -90,6 +115,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sensor-charts-column .chart-label {
@@ -102,22 +128,34 @@
   font-size: 13px;
   font-weight: 700;
   pointer-events: none;
+  box-sizing: border-box;
 }
+
+/* =========================================================
+   CHART GRAPH
+   ========================================================= */
 
 .sensor-charts-column .chart-graph {
   position: relative;
   width: 100%;
+  min-width: 0;
   min-height: 220px;
   flex: 1;
   padding: 8px 12px 14px;
   background: #FFFFFF;
+  box-sizing: border-box;
 }
 
 .sensor-charts-column .trend-chart {
   display: block;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
+
+/* =========================================================
+   EMPTY DATA MESSAGE
+   ========================================================= */
 
 .sensor-charts-column .chart-no-data {
   min-height: 250px;
@@ -131,25 +169,36 @@
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE DESIGN
    ========================================================= */
 
 /* Large screens */
+
 @media (min-width: 1500px) {
   .sensor-chart-section {
     min-height: 470px;
     padding: 24px;
   }
+
+  .sensor-charts-column .chart-panel {
+    min-height: 340px;
+  }
 }
 
 /* Tablets */
+
 @media (max-width: 1000px) {
   .sensor-chart-section {
     padding: 14px;
   }
+
+  .sensor-charts-column .chart-graph {
+    padding: 8px 8px 12px;
+  }
 }
 
 /* Small tablets and mobile */
+
 @media (max-width: 700px) {
   .sensor-chart-section {
     min-height: 390px;
@@ -166,6 +215,7 @@
   }
 
   .sensor-selector button {
+    min-width: 0;
     padding: 0 7px;
     font-size: 11px;
   }
@@ -173,9 +223,15 @@
   .sensor-charts-column .chart-panel {
     min-height: 270px;
   }
+
+  .sensor-charts-column .chart-graph {
+    min-height: 210px;
+    padding: 8px 6px 12px;
+  }
 }
 
 /* Small mobile */
+
 @media (max-width: 420px) {
   .sensor-chart-section {
     padding: 12px;
@@ -186,12 +242,28 @@
     font-size: 11px;
   }
 
+  .sensor-selector {
+    gap: 3px;
+    padding: 4px;
+  }
+
   .sensor-selector button {
     min-height: 34px;
+    padding: 0 4px;
     font-size: 10px;
   }
 
   .sensor-charts-column .chart-panel {
     min-height: 245px;
+  }
+
+  .sensor-charts-column .chart-label {
+    padding: 12px 12px 5px;
+    font-size: 12px;
+  }
+
+  .sensor-charts-column .chart-graph {
+    min-height: 190px;
+    padding: 6px 4px 10px;
   }
 }

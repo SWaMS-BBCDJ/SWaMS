@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getToken } from "../services/auth";
+import { getToken, getCurrentUser } from "../services/auth";
 import "../styles/Settings.css";
 
 const API_URL = "http://localhost:5000/api";
@@ -21,6 +21,9 @@ const parameterInfo = [
 function Settings() {
   const navigate = useNavigate();
 
+  const currentUser = getCurrentUser();
+  const isAdmin = currentUser?.role === "admin";
+
   // Threshold states
   const [thresholds, setThresholds] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -28,13 +31,13 @@ function Settings() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // SMS states
+  // SMS states (admin only)
   const [mobileNumber, setMobileNumber] = useState("");
   const [savingMobile, setSavingMobile] = useState(false);
   const [mobileMessage, setMobileMessage] = useState("");
   const [mobileError, setMobileError] = useState("");
 
-  // Load saved thresholds
+  // Load thresholds for both admin and operator
   useEffect(() => {
     async function loadThresholds() {
       try {
@@ -50,7 +53,9 @@ function Settings() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || "Failed to load settings");
+          throw new Error(
+            data.message || "Failed to load thresholds"
+          );
         }
 
         setThresholds((previous) => ({
@@ -67,8 +72,10 @@ function Settings() {
     loadThresholds();
   }, []);
 
-  // Load existing operator mobile number
+  // Load operator mobile number only for admin
   useEffect(() => {
+    if (!isAdmin) return;
+
     async function loadOperatorMobile() {
       try {
         const response = await fetch(
@@ -95,10 +102,12 @@ function Settings() {
     }
 
     loadOperatorMobile();
-  }, []);
+  }, [isAdmin]);
 
-  // Save operator mobile number
+  // Save operator mobile number (admin only)
   async function saveOperatorMobile() {
+    if (!isAdmin) return;
+
     setSavingMobile(true);
     setMobileMessage("");
     setMobileError("");
@@ -145,6 +154,8 @@ function Settings() {
 
   // Update threshold input
   function handleChange(parameter, field, value) {
+    if (!isAdmin) return;
+
     setThresholds((previous) => ({
       ...previous,
       [parameter]: {
@@ -157,8 +168,10 @@ function Settings() {
     setError("");
   }
 
-  // Save threshold settings
+  // Save threshold settings (admin only)
   async function saveThresholds(values) {
+    if (!isAdmin) return;
+
     setSaving(true);
     setMessage("");
     setError("");
@@ -205,7 +218,9 @@ function Settings() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Unable to save settings");
+        throw new Error(
+          data.message || "Unable to save settings"
+        );
       }
 
       setMessage("Threshold settings saved successfully!");
@@ -216,8 +231,10 @@ function Settings() {
     }
   }
 
-  // Restore default thresholds
+  // Restore default thresholds (admin only)
   function restoreDefaults() {
+    if (!isAdmin) return;
+
     const confirmed = window.confirm(
       "Restore the default SWaMS threshold values?"
     );
@@ -231,13 +248,16 @@ function Settings() {
   if (loading) {
     return (
       <main className="settings-main">
-        <p className="settings-description">Loading settings...</p>
+        <p className="settings-description">
+          Loading settings...
+        </p>
       </main>
     );
   }
 
   return (
     <main className="settings-main">
+
       {/* PAGE HEADER */}
       <header className="settings-header">
         <div>
@@ -249,7 +269,9 @@ function Settings() {
           </button>
         </div>
 
-        <h1 className="settings-title">System Settings</h1>
+        <h1 className="settings-title">
+          System Settings
+        </h1>
 
         <p className="settings-description">
           Configure your SWaMS water-quality monitoring system.
@@ -259,27 +281,40 @@ function Settings() {
       {/* TWO-COLUMN LAYOUT */}
       <div className="settings-grid">
 
-        {/* LEFT COLUMN: THRESHOLD MANAGEMENT */}
+        {/* THRESHOLD MANAGEMENT */}
         <section className="settings-card">
+
           <div className="settings-card-header">
             <h2 className="settings-card-title">
               Alert Threshold Management
             </h2>
 
             <p className="settings-card-description">
-              Set the acceptable minimum and maximum values
-              for each water-quality parameter.
+              {isAdmin
+                ? "Set the acceptable minimum and maximum values for each water-quality parameter."
+                : "View the acceptable minimum and maximum values for each water-quality parameter."}
             </p>
+
+            {!isAdmin && (
+              <p className="settings-help">
+                You have view-only access to these settings.
+                Contact an administrator to make changes.
+              </p>
+            )}
           </div>
 
           <div className="settings-form">
             {parameterInfo.map((parameter) => (
-              <div className="settings-parameter" key={parameter.key}>
+              <div
+                className="settings-parameter"
+                key={parameter.key}
+              >
                 <h3 className="settings-label">
                   {parameter.label}
                 </h3>
 
                 <div className="settings-range-grid">
+
                   <label className="settings-field">
                     <span className="settings-label">
                       Minimum ({parameter.unit})
@@ -292,6 +327,8 @@ function Settings() {
                       value={
                         thresholds[parameter.key]?.safe_min ?? ""
                       }
+                      readOnly={!isAdmin}
+                      disabled={!isAdmin}
                       onChange={(e) =>
                         handleChange(
                           parameter.key,
@@ -314,6 +351,8 @@ function Settings() {
                       value={
                         thresholds[parameter.key]?.safe_max ?? ""
                       }
+                      readOnly={!isAdmin}
+                      disabled={!isAdmin}
                       onChange={(e) =>
                         handleChange(
                           parameter.key,
@@ -323,12 +362,13 @@ function Settings() {
                       }
                     />
                   </label>
+
                 </div>
               </div>
             ))}
           </div>
 
-          {message && (
+          {isAdmin && message && (
             <p className="settings-message settings-message-success">
               ✓ {message}
             </p>
@@ -340,87 +380,95 @@ function Settings() {
             </p>
           )}
 
-          <div className="settings-actions">
-            <button
-              className="settings-button settings-button-primary"
-              onClick={() => saveThresholds(thresholds)}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
+          {/* ADMIN-ONLY BUTTONS */}
+          {isAdmin && (
+            <div className="settings-actions">
+              <button
+                className="settings-button settings-button-primary"
+                onClick={() => saveThresholds(thresholds)}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
 
-            <button
-              className="settings-button settings-button-secondary"
-              onClick={restoreDefaults}
-              disabled={saving}
-            >
-              Restore Defaults
-            </button>
-          </div>
-        </section>
-
-        {/* RIGHT COLUMN: SMS SETTINGS */}
-        <section className="settings-card">
-          <div className="settings-card-header">
-            <h2 className="settings-card-title">
-              SMS Notification Settings
-            </h2>
-
-            <p className="settings-card-description">
-              Configure the operator's mobile number that will receive
-              water-quality alert notifications.
-            </p>
-          </div>
-
-          <div className="settings-form">
-            <label className="settings-field">
-              <span className="settings-label">
-                Operator Mobile Number
-              </span>
-
-              <input
-                className="settings-input"
-                type="tel"
-                placeholder="+639XXXXXXXXX"
-                value={mobileNumber}
-                onChange={(e) => {
-                  setMobileNumber(e.target.value);
-                  setMobileMessage("");
-                  setMobileError("");
-                }}
-              />
-
-              <span className="settings-help">
-                Use Philippine international format, for example:
-                +639XXXXXXXXX.
-              </span>
-            </label>
-          </div>
-
-          {mobileMessage && (
-            <p className="settings-message settings-message-success">
-              ✓ {mobileMessage}
-            </p>
+              <button
+                className="settings-button settings-button-secondary"
+                onClick={restoreDefaults}
+                disabled={saving}
+              >
+                Restore Defaults
+              </button>
+            </div>
           )}
 
-          {mobileError && (
-            <p className="settings-message settings-message-error">
-              {mobileError}
-            </p>
-          )}
-
-          <div className="settings-actions">
-            <button
-              className="settings-button settings-button-primary"
-              onClick={saveOperatorMobile}
-              disabled={savingMobile}
-            >
-              {savingMobile
-                ? "Saving..."
-                : "Save Mobile Number"}
-            </button>
-          </div>
         </section>
+
+        {/* SMS SETTINGS - ADMIN ONLY */}
+        {isAdmin && (
+          <section className="settings-card">
+
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">
+                SMS Notification Settings
+              </h2>
+
+              <p className="settings-card-description">
+                Configure the operator's mobile number that will
+                receive water-quality alert notifications.
+              </p>
+            </div>
+
+            <div className="settings-form">
+              <label className="settings-field">
+                <span className="settings-label">
+                  Operator Mobile Number
+                </span>
+
+                <input
+                  className="settings-input"
+                  type="tel"
+                  placeholder="+639XXXXXXXXX"
+                  value={mobileNumber}
+                  onChange={(e) => {
+                    setMobileNumber(e.target.value);
+                    setMobileMessage("");
+                    setMobileError("");
+                  }}
+                />
+
+                <span className="settings-help">
+                  Use Philippine international format, for example:
+                  +639XXXXXXXXX.
+                </span>
+              </label>
+            </div>
+
+            {mobileMessage && (
+              <p className="settings-message settings-message-success">
+                ✓ {mobileMessage}
+              </p>
+            )}
+
+            {mobileError && (
+              <p className="settings-message settings-message-error">
+                {mobileError}
+              </p>
+            )}
+
+            <div className="settings-actions">
+              <button
+                className="settings-button settings-button-primary"
+                onClick={saveOperatorMobile}
+                disabled={savingMobile}
+              >
+                {savingMobile
+                  ? "Saving..."
+                  : "Save Mobile Number"}
+              </button>
+            </div>
+
+          </section>
+        )}
 
       </div>
     </main>

@@ -1,35 +1,50 @@
+import "../styles/TrendChart.css";
 import { useMemo } from "react";
 
-const MARGIN = { top: 14, right: 16, bottom: 30, left: 44 };
+const MARGIN = { top: 14, right: 20, bottom: 35, left: 48 };
 const TICK_COUNT = 4;
 
-/* Fixed drawing size. The SVG scales to fit its container,
-   so no measuring (ResizeObserver) is needed. */
 const WIDTH = 600;
 const HEIGHT = 280;
 
 function formatValue(value) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  return Number.isInteger(value)
+    ? String(value)
+    : Number(value.toFixed(2));
 }
 
 function formatTime(date, spansDays) {
   return spansDays
-    ? date.toLocaleDateString([], { month: "short", day: "numeric" })
-    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    ? date.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      })
+    : date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 }
 
 function TrendChart({ readings = [], parameter, label }) {
-  /* Keep date and value together so they never fall out of step */
+
+  // Prepare and sort historical readings
   const data = useMemo(
     () =>
       readings
         .map((reading) => ({
-          time: new Date(reading.recordedAt),
+          time: new Date(
+            reading.recordedAt ??
+            reading.timestamp ??
+            reading.recorded_at ??
+            reading.created_at ??
+            reading.t
+          ),
           value: Number(reading[parameter]),
         }))
         .filter(
           (item) =>
-            Number.isFinite(item.value) && !Number.isNaN(item.time.getTime())
+            Number.isFinite(item.value) &&
+            !Number.isNaN(item.time.getTime())
         )
         .sort((a, b) => a.time - b.time),
     [readings, parameter]
@@ -39,79 +54,122 @@ function TrendChart({ readings = [], parameter, label }) {
     return (
       <div className="chart-panel">
         <div className="chart-label">{label}</div>
-        <div className="chart-no-data">NO DATA</div>
+        <div className="chart-no-data">
+          NO DATA AVAILABLE
+        </div>
       </div>
     );
   }
 
   const width = WIDTH;
   const height = HEIGHT;
-  const plotWidth = width - MARGIN.left - MARGIN.right;
-  const plotHeight = height - MARGIN.top - MARGIN.bottom;
 
-  /* Y scale: pad the range so flat readings sit in the middle, not on the edge */
+  const plotWidth =
+    width - MARGIN.left - MARGIN.right;
+
+  const plotHeight =
+    height - MARGIN.top - MARGIN.bottom;
+
+  // Calculate Y-axis range
   const values = data.map((item) => item.value);
+
   let min = Math.min(...values);
   let max = Math.max(...values);
 
-  if (min === max) {
-    const pad = Math.abs(min) * 0.1 || 1;
-    min -= pad;
-    max += pad;
-  } else {
-    const pad = (max - min) * 0.1;
-    min -= pad;
-    max += pad;
-  }
+  const pad =
+    min === max
+      ? Math.abs(min) * 0.1 || 1
+      : (max - min) * 0.1;
+
+  min -= pad;
+  max += pad;
 
   const range = max - min;
-  const getY = (value) =>
-    MARGIN.top + plotHeight - ((value - min) / range) * plotHeight;
 
-  /* X scale: position by real time, so gaps between readings show up */
+  const getY = (value) =>
+    MARGIN.top +
+    plotHeight -
+    ((value - min) / range) * plotHeight;
+
+  // Calculate X-axis using actual timestamps
   const startTime = data[0].time.getTime();
   const endTime = data[data.length - 1].time.getTime();
+
   const timeSpan = endTime - startTime;
-  const spansDays = timeSpan > 24 * 60 * 60 * 1000;
+
+  const spansDays =
+    timeSpan > 24 * 60 * 60 * 1000;
 
   const getX = (time) =>
     data.length === 1 || timeSpan === 0
       ? MARGIN.left + plotWidth / 2
-      : MARGIN.left + ((time.getTime() - startTime) / timeSpan) * plotWidth;
+      : MARGIN.left +
+        ((time.getTime() - startTime) / timeSpan) *
+          plotWidth;
 
+  // Generate chart points
   const points = data
-    .map((item) => `${getX(item.time)},${getY(item.value)}`)
+    .map(
+      (item) =>
+        `${getX(item.time)},${getY(item.value)}`
+    )
     .join(" ");
 
+  // Generate Y-axis ticks
   const yTicks = Array.from(
     { length: TICK_COUNT },
     (_, i) => min + (range * i) / (TICK_COUNT - 1)
   );
 
-  const xLabels =
+  // Generate distinct X-axis labels
+  const labelIndices =
     data.length === 1
-      ? [{ item: data[0], anchor: "middle" }]
+      ? [0]
       : [
-          { item: data[0], anchor: "start" },
-          { item: data[Math.floor((data.length - 1) / 2)], anchor: "middle" },
-          { item: data[data.length - 1], anchor: "end" },
+          0,
+          Math.floor((data.length - 1) / 2),
+          data.length - 1,
         ];
+
+  const xLabels = [];
+  const usedLabels = new Set();
+
+  labelIndices.forEach((index) => {
+    const item = data[index];
+    const text = formatTime(item.time, spansDays);
+
+    if (!usedLabels.has(text)) {
+      usedLabels.add(text);
+
+      xLabels.push({
+        item,
+        text,
+        index,
+      });
+    }
+  });
 
   return (
     <div className="chart-panel">
-      <div className="chart-label">{label}</div>
+
+      <div className="chart-label">
+        {label}
+      </div>
 
       <div className="chart-graph">
+
         <svg
           className="trend-chart"
           viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label={`${label} trend chart`}
+          aria-label={`${label} historical trend chart`}
         >
-          {/* Grid lines and Y axis labels */}
-          {yTicks.map((tick) => (
-            <g key={tick}>
+
+          {/* Y-axis grid lines and labels */}
+          {yTicks.map((tick, index) => (
+            <g key={index}>
+
               <line
                 x1={MARGIN.left}
                 x2={width - MARGIN.right}
@@ -120,6 +178,7 @@ function TrendChart({ readings = [], parameter, label }) {
                 stroke="#E2E8F0"
                 strokeWidth="1"
               />
+
               <text
                 x={MARGIN.left - 8}
                 y={getY(tick)}
@@ -128,26 +187,37 @@ function TrendChart({ readings = [], parameter, label }) {
                 fontSize="11"
                 fill="#64748B"
               >
-                {formatValue(Number(tick.toFixed(2)))}
+                {formatValue(
+                  Number(tick.toFixed(2))
+                )}
               </text>
+
             </g>
           ))}
 
-          {/* X axis time labels */}
-          {xLabels.map(({ item, anchor }) => (
+          {/* X-axis labels */}
+          {xLabels.map(({ item, text, index }) => (
             <text
-              key={item.time.getTime()}
+              key={`${item.time.getTime()}-${index}`}
               x={getX(item.time)}
               y={height - 8}
-              textAnchor={anchor}
+              textAnchor={
+                xLabels.length === 1
+                  ? "middle"
+                  : index === 0
+                    ? "start"
+                    : index === data.length - 1
+                      ? "end"
+                      : "middle"
+              }
               fontSize="11"
               fill="#64748B"
             >
-              {formatTime(item.time, spansDays)}
+              {text}
             </text>
           ))}
 
-          {/* Trend line (needs 2+ readings) */}
+          {/* Historical trend line */}
           {data.length > 1 && (
             <polyline
               points={points}
@@ -159,10 +229,10 @@ function TrendChart({ readings = [], parameter, label }) {
             />
           )}
 
-          {/* One dot per stored reading, with a hover tooltip */}
+          {/* Individual historical readings */}
           {data.map((item, index) => (
             <circle
-              key={`${parameter}-${index}`}
+              key={`${parameter}-${item.time.getTime()}-${index}`}
               cx={getX(item.time)}
               cy={getY(item.value)}
               r="4"
@@ -175,8 +245,11 @@ function TrendChart({ readings = [], parameter, label }) {
               </title>
             </circle>
           ))}
+
         </svg>
+
       </div>
+
     </div>
   );
 }

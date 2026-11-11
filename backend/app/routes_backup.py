@@ -254,6 +254,12 @@ def alerts():
         period=request.args.get("period", "7days").lower(),
         start_date=start_date.isoformat() if start_date else None,
         end_date=end_date.isoformat() if end_date else None,
+
+        query = build_alert_query(
+            start_date=start_date,
+            end_date=end_date,
+            parameter=parameter,
+        )
     )
 
 
