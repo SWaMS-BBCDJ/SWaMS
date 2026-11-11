@@ -66,7 +66,6 @@ function isWithinDateRange(timestamp, startDate, endDate) {
 
 // Compare sensor readings with database thresholds.
 function getParameterStatus(parameter, value, limits) {
-
   if (
     value == null ||
     value === "" ||
@@ -101,22 +100,32 @@ function getParameterStatus(parameter, value, limits) {
     return "NOT EVALUATED";
   }
 
-  // Danger: outside configured safe range.
-  if (v < min || v > max) {
-    return "DANGER";
+  // Safe: within configured safe range.
+  if (v >= min && v <= max) {
+    return "SAFE";
   }
 
-  // Warning: close to either safe boundary.
-  const warningMargin = (max - min) * 0.1;
+  // Warning boundaries.
+  const warningMin =
+    limits.warning_min == null || limits.warning_min === ""
+      ? null
+      : Number(limits.warning_min);
 
+  const warningMax =
+    limits.warning_max == null || limits.warning_max === ""
+      ? null
+      : Number(limits.warning_max);
+
+  // Warning: outside safe range but within warning boundaries.
   if (
-    v <= min + warningMargin ||
-    v >= max - warningMargin
+    (v < min && (warningMin === null || v >= warningMin)) ||
+    (v > max && (warningMax === null || v <= warningMax))
   ) {
     return "WARNING";
   }
 
-  return "SAFE";
+  // Critical: beyond configured warning boundaries.
+  return "DANGER";
 }
 
 

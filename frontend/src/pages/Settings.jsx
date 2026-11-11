@@ -7,9 +7,24 @@ import "../styles/Settings.css";
 const API_URL = "http://localhost:5000/api";
 
 const DEFAULTS = {
-  ph: { safe_min: 6.5, safe_max: 9.0 },
-  temperature: { safe_min: 27, safe_max: 30 },
-  turbidity: { safe_min: 0, safe_max: 50 },
+  ph: {
+    safe_min: 6.5,
+    safe_max: 9.0,
+    warning_min: 6.0,
+    warning_max: 9.5,
+  },
+  temperature: {
+    safe_min: 27,
+    safe_max: 30,
+    warning_min: 26,
+    warning_max: 31,
+  },
+  turbidity: {
+    safe_min: 0,
+    safe_max: 50,
+    warning_min: null,
+    warning_max: 60,
+  },
 };
 
 const parameterInfo = [
@@ -197,9 +212,32 @@ function Settings() {
           );
         }
 
+        const warningMin =
+          range.warning_min === "" || range.warning_min == null
+            ? null
+            : Number(range.warning_min);
+
+        const warningMax =
+          range.warning_max === "" || range.warning_max == null
+            ? null
+            : Number(range.warning_max);
+
+        if (
+          (warningMin !== null && !Number.isFinite(warningMin)) ||
+          (warningMax !== null && !Number.isFinite(warningMax)) ||
+          (warningMin !== null && warningMin > min) ||
+          (warningMax !== null && warningMax < max)
+        ) {
+          throw new Error(
+            `Warning limits for ${parameter.label} must include the safe range.`
+          );
+        }
+
         payload[parameter.key] = {
           safe_min: min,
           safe_max: max,
+          warning_min: warningMin,
+          warning_max: warningMax,
         };
       }
 
@@ -313,57 +351,73 @@ function Settings() {
                   {parameter.label}
                 </h3>
 
-                <div className="settings-range-grid">
+              <div className="settings-range-grid">
 
-                  <label className="settings-field">
-                    <span className="settings-label">
-                      Minimum ({parameter.unit})
-                    </span>
+              <label className="settings-field">
+                <span className="settings-label">
+                  Safe Minimum ({parameter.unit})
+                </span>
+                <input
+                  className="settings-input"
+                  type="number"
+                  step="any"
+                  value={thresholds[parameter.key]?.safe_min ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(e) =>
+                    handleChange(parameter.key, "safe_min", e.target.value)
+                  }
+                />
+              </label>
 
-                    <input
-                      className="settings-input"
-                      type="number"
-                      step="any"
-                      value={
-                        thresholds[parameter.key]?.safe_min ?? ""
-                      }
-                      readOnly={!isAdmin}
-                      disabled={!isAdmin}
-                      onChange={(e) =>
-                        handleChange(
-                          parameter.key,
-                          "safe_min",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </label>
+              <label className="settings-field">
+                <span className="settings-label">
+                  Safe Maximum ({parameter.unit})
+                </span>
+                <input
+                  className="settings-input"
+                  type="number"
+                  step="any"
+                  value={thresholds[parameter.key]?.safe_max ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(e) =>
+                    handleChange(parameter.key, "safe_max", e.target.value)
+                  }
+                />
+              </label>
 
-                  <label className="settings-field">
-                    <span className="settings-label">
-                      Maximum ({parameter.unit})
-                    </span>
+              <label className="settings-field">
+                <span className="settings-label">
+                  Warning Minimum ({parameter.unit})
+                </span>
+                <input
+                  className="settings-input"
+                  type="number"
+                  step="any"
+                  value={thresholds[parameter.key]?.warning_min ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(e) =>
+                    handleChange(parameter.key, "warning_min", e.target.value)
+                  }
+                />
+              </label>
 
-                    <input
-                      className="settings-input"
-                      type="number"
-                      step="any"
-                      value={
-                        thresholds[parameter.key]?.safe_max ?? ""
-                      }
-                      readOnly={!isAdmin}
-                      disabled={!isAdmin}
-                      onChange={(e) =>
-                        handleChange(
-                          parameter.key,
-                          "safe_max",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </label>
+              <label className="settings-field">
+                <span className="settings-label">
+                  Warning Maximum ({parameter.unit})
+                </span>
+                <input
+                  className="settings-input"
+                  type="number"
+                  step="any"
+                  value={thresholds[parameter.key]?.warning_max ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(e) =>
+                    handleChange(parameter.key, "warning_max", e.target.value)
+                  }
+                />
+              </label>
 
-                </div>
+            </div>
               </div>
             ))}
           </div>

@@ -24,6 +24,8 @@ class Threshold(db.Model):
     parameter = db.Column(db.String(20), unique=True, nullable=False)
     safe_min = db.Column(db.Float)
     safe_max = db.Column(db.Float)
+    warning_min = db.Column(db.Float, nullable=True)
+    warning_max = db.Column(db.Float, nullable=True)
 
 class AlertLog(db.Model):
     __tablename__ = "alert_logs"

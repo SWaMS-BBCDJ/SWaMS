@@ -535,7 +535,9 @@ def get_threshold_settings():
     result = {
         item.parameter.lower(): {
             "safe_min": item.safe_min,
-            "safe_max": item.safe_max
+            "safe_max": item.safe_max,
+            "warning_min": item.warning_min,
+            "warning_max": item.warning_max
         }
         for item in thresholds
     }
@@ -548,13 +550,15 @@ def get_threshold_settings():
 # ADMIN ONLY
 # ==========================================
 
+
 @main.put("/api/settings/thresholds")
 @admin_required
 def update_threshold_settings():
 
     data = request.get_json(silent=True) or {}
-
     allowed_parameters = ("ph", "temperature", "turbidity")
+
+    updates = []
 
     for parameter in allowed_parameters:
 
@@ -566,14 +570,42 @@ def update_threshold_settings():
         if not isinstance(values, dict):
             return jsonify(message=f"Invalid settings for {parameter}"), 400
 
+        threshold = Threshold.query.filter_by(
+            parameter=parameter
+        ).first()
+
         try:
             safe_min = float(values["safe_min"])
             safe_max = float(values["safe_max"])
 
+            warning_min = (
+                float(values["warning_min"])
+                if "warning_min" in values and values["warning_min"] is not None
+                else (
+                    None if "warning_min" in values
+                    else threshold.warning_min if threshold else None
+                )
+            )
+
+            warning_max = (
+                float(values["warning_max"])
+                if "warning_max" in values and values["warning_max"] is not None
+                else (
+                    None if "warning_max" in values
+                    else threshold.warning_max if threshold else None
+                )
+            )
+
         except (KeyError, TypeError, ValueError):
             return jsonify(message=f"Invalid range for {parameter}"), 400
 
-        if not math.isfinite(safe_min) or not math.isfinite(safe_max):
+        numbers = [safe_min, safe_max]
+        numbers.extend(
+            value for value in (warning_min, warning_max)
+            if value is not None
+        )
+
+        if not all(math.isfinite(value) for value in numbers):
             return jsonify(message="Values must be finite numbers"), 400
 
         if safe_min >= safe_max:
@@ -581,16 +613,43 @@ def update_threshold_settings():
                 message=f"Minimum must be lower than maximum for {parameter}"
             ), 400
 
-        if parameter == "ph" and (safe_min < 0 or safe_max > 14):
-            return jsonify(message="pH must be between 0 and 14"), 400
+        if warning_min is not None and warning_min >= safe_min:
+            return jsonify(
+                message=f"Warning minimum must be lower than safe minimum for {parameter}"
+            ), 400
 
-        if parameter == "temperature" and (
-            safe_min < -10 or safe_max > 60
-        ):
-            return jsonify(message="Invalid temperature range"), 400
+        if warning_max is not None and warning_max <= safe_max:
+            return jsonify(
+                message=f"Warning maximum must be higher than safe maximum for {parameter}"
+            ), 400
 
-        if parameter == "turbidity" and safe_min < 0:
-            return jsonify(message="Turbidity cannot be negative"), 400
+        if parameter == "ph":
+            if safe_min < 0 or safe_max > 14:
+                return jsonify(message="pH must be between 0 and 14"), 400
+            if warning_min is not None and warning_min < 0:
+                return jsonify(message="pH warning minimum cannot be below 0"), 400
+            if warning_max is not None and warning_max > 14:
+                return jsonify(message="pH warning maximum cannot exceed 14"), 400
+
+        if parameter == "temperature":
+            if safe_min < -10 or safe_max > 60:
+                return jsonify(message="Invalid temperature range"), 400
+            if warning_min is not None and warning_min < -10:
+                return jsonify(message="Invalid warning temperature minimum"), 400
+            if warning_max is not None and warning_max > 60:
+                return jsonify(message="Invalid warning temperature maximum"), 400
+
+        if parameter == "turbidity":
+            if safe_min < 0 or (warning_min is not None and warning_min < 0):
+                return jsonify(message="Turbidity cannot be negative"), 400
+            if warning_max is not None and warning_max < 0:
+                return jsonify(message="Turbidity warning maximum cannot be negative"), 400
+
+        updates.append((
+            parameter, safe_min, safe_max, warning_min, warning_max
+        ))
+
+    for parameter, safe_min, safe_max, warning_min, warning_max in updates:
 
         threshold = Threshold.query.filter_by(
             parameter=parameter
@@ -602,6 +661,8 @@ def update_threshold_settings():
 
         threshold.safe_min = safe_min
         threshold.safe_max = safe_max
+        threshold.warning_min = warning_min
+        threshold.warning_max = warning_max
 
     db.session.commit()
 
