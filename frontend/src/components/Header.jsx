@@ -3,10 +3,9 @@ import { logout, getCurrentUser } from "../services/auth";
 import "../styles/Header.css";
 import { Settings as SettingsIcon } from "lucide-react";
 
+
 function Header() {
   const navigate = useNavigate();
-  const user = getCurrentUser();
-  const isAdmin = user?.role === "admin";
 
   function handleLogout() {
     logout();
@@ -30,7 +29,6 @@ function Header() {
       </div>
 
       <div className="header-actions">
-        {isAdmin && (
           <button
             className="settings-button"
             onClick={() => navigate("/settings")}
@@ -39,7 +37,7 @@ function Header() {
           >
             <SettingsIcon className="settings-icon" strokeWidth={2} />
           </button>
-        )}
+        
 
         <button className="logout-button" onClick={handleLogout}>
           LOG OUT

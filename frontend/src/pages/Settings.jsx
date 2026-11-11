@@ -457,72 +457,78 @@ function Settings() {
 
         </section>
 
-        {/* SMS SETTINGS - ADMIN ONLY */}
-        {isAdmin && (
-          <section className="settings-card">
+        {/* SMS SETTINGS - ADMIN AND OPERATOR */}
+        <section className="settings-card">
 
-            <div className="settings-card-header">
-              <h2 className="settings-card-title">
-                SMS Notification Settings
-              </h2>
+          <div className="settings-card-header">
+            <h2 className="settings-card-title">
+              SMS Notification Settings
+            </h2>
 
-              <p className="settings-card-description">
-                Configure the operator's mobile number that will
-                receive water-quality alert notifications.
-              </p>
-            </div>
+            <p className="settings-card-description">
+              Configure the operator's mobile number that will
+              receive water-quality alert notifications.
+            </p>
 
-            <div className="settings-form">
-              <label className="settings-field">
-                <span className="settings-label">
-                  Operator Mobile Number
-                </span>
-
-                <input
-                  className="settings-input"
-                  type="tel"
-                  placeholder="+639XXXXXXXXX"
-                  value={mobileNumber}
-                  onChange={(e) => {
-                    setMobileNumber(e.target.value);
-                    setMobileMessage("");
-                    setMobileError("");
-                  }}
-                />
-
-                <span className="settings-help">
-                  Use Philippine international format, for example:
-                  +639XXXXXXXXX.
-                </span>
-              </label>
-            </div>
-
-            {mobileMessage && (
-              <p className="settings-message settings-message-success">
-                ✓ {mobileMessage}
+            {!isAdmin && (
+              <p className="settings-help">
+                You have view-only access to these settings.
+                Contact an administrator to make changes.
               </p>
             )}
+          </div>
 
-            {mobileError && (
-              <p className="settings-message settings-message-error">
-                {mobileError}
-              </p>
-            )}
+          <div className="settings-form">
+            <label className="settings-field">
+              <span className="settings-label">
+                Operator Mobile Number
+              </span>
 
+              <input
+                className="settings-input"
+                type="tel"
+                placeholder="+639XXXXXXXXX"
+                value={mobileNumber}
+                disabled={!isAdmin}
+                onChange={(e) => {
+                  setMobileNumber(e.target.value);
+                  setMobileMessage("");
+                  setMobileError("");
+                }}
+              />
+
+              <span className="settings-help">
+                Use Philippine international format, for example:
+                +639XXXXXXXXX.
+              </span>
+            </label>
+          </div>
+
+          {isAdmin && mobileMessage && (
+            <p className="settings-message settings-message-success">
+              ✓ {mobileMessage}
+            </p>
+          )}
+
+          {isAdmin && mobileError && (
+            <p className="settings-message settings-message-error">
+              {mobileError}
+            </p>
+          )}
+
+          {isAdmin && (
             <div className="settings-actions">
               <button
                 className="settings-button settings-button-primary"
                 onClick={saveOperatorMobile}
                 disabled={savingMobile}
               >
-                {savingMobile
-                  ? "Saving..."
-                  : "Save Mobile Number"}
+                {savingMobile ? "Saving..." : "Save Mobile Number"}
               </button>
             </div>
+          )}
 
-          </section>
-        )}
+        </section>
 
       </div>
     </main>
