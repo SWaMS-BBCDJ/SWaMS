@@ -186,7 +186,7 @@ function createAlerts(reading, statuses) {
 
   parameters.forEach(([parameter, rawValue, status, unit]) => {
 
-    if (status === "SAFE") return;
+    if (status === "SAFE" || status === "NOT EVALUATED") return;
 
     const value = Number(rawValue);
 
@@ -212,13 +212,9 @@ function createAlerts(reading, statuses) {
           : "warning",
 
       message:
-        status === "NOT EVALUATED"
-          ? "This parameter could not be evaluated. Check the sensor reading."
-          : status === "DANGER"
-            ? `${parameter} is outside its configured range.`
-            : `${parameter} is approaching a configured limit.`,
-
-      recordedAt,
+      status === "DANGER"
+        ? `${parameter} has exceeded the configured warning limits. Immediate attention is required.`
+        : `${parameter} is outside the safe range and requires monitoring.`,
 
     });
 
@@ -394,6 +390,10 @@ function Dashboard() {
       try {
 
         const data = await getThresholds();
+        console.log(
+          "THRESHOLDS FROM BACKEND:",
+          JSON.stringify(data, null, 2)
+        );
 
         if (active) {
 
@@ -446,6 +446,33 @@ function Dashboard() {
    ======================================================= */
 
   const liveReading = latestLiveReading;
+  useEffect(() => {
+    let active = true;
+
+    async function fetchLatestReading() {
+      try {
+        const data = await getLatestReading();
+
+        if (active) {
+          setLatestLiveReading(data);
+          setLiveError("");
+        }
+      } catch (error) {
+        if (active) {
+          setLiveError(error.message);
+        }
+      }
+    }
+
+    fetchLatestReading();
+
+    const timer = setInterval(fetchLatestReading, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   const latestReadingAge = liveReading?.timestamp
     ? Date.now() - new Date(liveReading.timestamp).getTime()
