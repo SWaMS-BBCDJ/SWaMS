@@ -1,3 +1,4 @@
+
 /* =========================================================
    DATE FILTER
    Import in components/DateFilter.jsx:
@@ -19,12 +20,14 @@
   box-shadow: var(--shadow);
 }
 
+/* Label */
 .date-filter label {
   color: #1F2937;
   font-size: 12px;
   font-weight: 700;
 }
 
+/* Date inputs */
 .date-filter input {
   height: 38px;
   min-width: 145px;
@@ -43,6 +46,7 @@
   box-shadow: 0 0 0 3px rgba(40, 115, 77, 0.12);
 }
 
+/* Regular date filter buttons */
 .date-filter button {
   min-height: 38px;
   padding: 0 18px;
@@ -61,20 +65,23 @@
   transform: translateY(-1px);
 }
 
-.clear-filter-button {
-  align-self: flex-start;
-  padding: 8px 14px;
+/* Clear Date Filter button */
+.date-filter .clear-filter-button {
+  min-height: 38px;
+  padding: 0 18px;
   background: #FFFFFF;
-  color: var(--primary);
-  border: 1px solid var(--primary);
+  color: #1F2937;
+  border: 1px solid var(--border);
   border-radius: 7px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: 0.2s ease;
 }
 
-.clear-filter-button:hover {
-  background: var(--primary-light);
+.date-filter .clear-filter-button:hover {
+  background: #F8FAFC;
+  transform: translateY(-1px);
 }
 
 /* =========================================================

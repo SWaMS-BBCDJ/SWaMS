@@ -785,31 +785,14 @@ function Dashboard() {
             DATE FILTER
             ============================================ */}
 
+        
         <DateFilter
-
           startDate={startDate}
-
           endDate={endDate}
-
           onStartDateChange={setStartDate}
-
           onEndDateChange={setEndDate}
-
+          onClear={clearDateFilter}
         />
-
-
-        {/* CLEAR DATE FILTER */}
-        {(startDate || endDate) && (
-
-          <button
-            type="button"
-            className="clear-filter-button"
-            onClick={clearDateFilter}
-          >
-            Clear Date Filter
-          </button>
-
-        )}
 
 
         {/* ============================================
