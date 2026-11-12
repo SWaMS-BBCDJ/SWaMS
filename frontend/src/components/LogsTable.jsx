@@ -18,9 +18,16 @@ function LogsTable({ readings = [] }) {
             <tr key={reading.id ?? index}>
               <td>
                 {reading.recordedAt
-                  ? new Date(
-                      reading.recordedAt
-                    ).toLocaleString()
+                  ? new Date(reading.recordedAt).toLocaleString("en-PH", {
+                      timeZone: "Asia/Manila",
+                      month: "numeric",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })
                   : "--"}
               </td>
 
@@ -41,7 +48,9 @@ function LogsTable({ readings = [] }) {
               </td>
 
               <td>
-                {reading.status ?? "REVIEW"}
+                <span className={`status-label ${reading.status?.toLowerCase().replace(/\s+/g, "-")}`}>
+                  {reading.status ?? "NOT EVALUATED"}
+                </span>
               </td>
             </tr>
           ))}

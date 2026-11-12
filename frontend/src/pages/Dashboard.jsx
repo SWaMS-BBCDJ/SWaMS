@@ -199,10 +199,9 @@ function createAlerts(reading, statuses) {
           : `${value.toFixed(1)}${unit}`;
 
     result.push({
-
-      id: `${parameter}-${recordedAt}`,
-
-      parameter,
+        id: `${parameter}-${recordedAt}`,
+        recordedAt: recordedAt,
+        parameter,
 
       value: shown,
 
@@ -532,9 +531,34 @@ function Dashboard() {
 
       })
 
-      .slice(0, 5);
+      .slice(0, 5)
 
-  }, [filteredReadings]);
+      .map((reading) => {
+
+        const statuses = [
+          getParameterStatus("ph", reading.ph, thresholds?.ph),
+
+          getParameterStatus(
+            "temperature",
+            reading.temperature,
+            thresholds?.temperature
+          ),
+
+          getParameterStatus(
+            "turbidity",
+            reading.turbidity,
+            thresholds?.turbidity
+          ),
+        ];
+
+        return {
+          ...reading,
+          status: getOverallStatus(statuses),
+        };
+
+      });
+
+  }, [filteredReadings, thresholds]);
 
 
   /* =======================================================

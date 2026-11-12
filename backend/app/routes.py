@@ -281,7 +281,7 @@ def history():
 
     return jsonify([
         {
-            "t": reading.timestamp.isoformat(),
+            "t": reading.timestamp.isoformat() + "Z",
             "ph": reading.ph,
             "temperature": reading.temperature,
             "turbidity": reading.turbidity,

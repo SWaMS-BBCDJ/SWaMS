@@ -9,8 +9,20 @@ function splitDateTime(recordedAt) {
   }
 
   return {
-    date: d.toLocaleDateString("en-US"),  // 11/7/2026
-    time: d.toLocaleTimeString("en-US"),  // 11:21:05 AM
+    date: d.toLocaleDateString("en-PH", {
+      timeZone: "Asia/Manila",
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+    }),
+
+    time: d.toLocaleTimeString("en-PH", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }),
   };
 }
 

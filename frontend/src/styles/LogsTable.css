@@ -105,3 +105,26 @@
   background: #DC2626;
   box-shadow: 0 0 0 3px #FEE2E2;
 }
+
+/* Log status text colors */
+
+.status-label {
+  margin-left: 8px;
+  font-weight: 700;
+}
+
+.status-label.safe {
+  color: #16A34A;
+}
+
+.status-label.warning {
+  color: #D97706;
+}
+
+.status-label.danger {
+  color: #DC2626;
+}
+
+.status-label.not-evaluated {
+  color: #64748B;
+}
