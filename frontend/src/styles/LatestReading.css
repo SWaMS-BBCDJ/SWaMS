@@ -1,7 +1,6 @@
+
 /* =========================================================
    LATEST READING
-   Import in components/LatestReading.jsx:
-   import "../styles/LatestReading.css";
    ========================================================= */
 
 .latest-reading-container {
@@ -16,7 +15,7 @@
 
 /* Receiving new readings */
 .latest-reading-container.receiving {
-  border-top-color: var(--primary);
+  border-top-color: #16A34A;
 }
 
 /* Last reading exists, but it is no longer live */
@@ -29,6 +28,7 @@
   border-top-color: #94A3B8;
 }
 
+/* Main content layout */
 .latest-reading-box {
   width: 100%;
   height: 100%;
@@ -38,30 +38,46 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   background: #FFFFFF;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
+/* Location */
+.latest-reading-location {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Latest Sensor Reading heading */
 .latest-reading-label {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.latest-reading-date {
+/* Date and time in one row */
+.latest-reading-date-time {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Date and time use identical styling */
+.latest-reading-date,
+.latest-reading-time,
+.date-time-divider {
   color: #1F2937;
   font-size: 17px;
   font-weight: 700;
-}
-
-.latest-reading-time {
-  color: var(--primary);
-  font-size: 21px;
-  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
@@ -73,18 +89,24 @@
   .latest-reading-box {
     min-height: 95px;
     padding: 10px;
+    gap: 5px;
+  }
+
+  .latest-reading-location {
+    font-size: 10px;
   }
 
   .latest-reading-label {
     font-size: 9px;
   }
 
-  .latest-reading-date {
-    font-size: 11px;
-    text-align: center;
+  .latest-reading-date,
+  .latest-reading-time,
+  .date-time-divider {
+    font-size: 12px;
   }
 
-  .latest-reading-time {
-    font-size: 15px;
+  .latest-reading-date-time {
+    gap: 6px;
   }
 }

@@ -32,21 +32,27 @@ function LatestReading({ reading, status }) {
     : "--:--:--";
 
   return (
-    <section
-      className={`latest-reading-container ${status}`}
-    >
+    <section className={`latest-reading-container ${status}`}>
       <div className="latest-reading-box">
         <span className="latest-reading-label">
           LATEST SENSOR READING
         </span>
 
-        <span className="latest-reading-date">
-          {formattedDate}
+        <span className="latest-reading-location">
+          Claveria, Misamis Oriental, Philippines
         </span>
 
-        <span className="latest-reading-time">
-          {formattedTime}
-        </span>
+        <div className="latest-reading-date-time">
+          <span className="latest-reading-date">
+            {formattedDate}
+          </span>
+
+          <span className="date-time-divider">|</span>
+
+          <span className="latest-reading-time">
+            {formattedTime}
+          </span>
+        </div>
       </div>
     </section>
   );
