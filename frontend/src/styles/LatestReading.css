@@ -13,18 +13,20 @@
   border-radius: var(--radius);
 }
 
-/* Receiving new readings */
-.latest-reading-container.receiving {
+/* Overall water quality status */
+.latest-reading-container.safe {
   border-top-color: #16A34A;
 }
 
-/* Last reading exists, but it is no longer live */
-.latest-reading-container.stale {
-  border-top-color: var(--warning, #D97706);
+.latest-reading-container.warning {
+  border-top-color: #D97706;
 }
 
-/* No recorded reading */
-.latest-reading-container.not-receiving {
+.latest-reading-container.danger {
+  border-top-color: #DC2626;
+}
+
+.latest-reading-container.not-evaluated {
   border-top-color: #94A3B8;
 }
 

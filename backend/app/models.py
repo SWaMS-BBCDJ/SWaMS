@@ -77,3 +77,121 @@ class LiveReading(db.Model):
     ph = db.Column(db.Float, nullable=False)
     temperature = db.Column(db.Float, nullable=False)
     turbidity = db.Column(db.Float, nullable=False)
+
+
+class HourlyReadingBuffer(db.Model):
+    __tablename__ = "hourly_reading_buffer"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    pond_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ponds.id"),
+        nullable=False
+    )
+
+    # Beginning of the Philippine-time hour, stored as UTC
+    hour_start = db.Column(db.DateTime, nullable=False)
+
+    ph = db.Column(db.Float, nullable=False)
+    temperature = db.Column(db.Float, nullable=False)
+    turbidity = db.Column(db.Float, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "pond_id",
+            "hour_start",
+            name="unique_pond_hour"
+        ),
+    )
+
+
+class AlertIncident(db.Model):
+    __tablename__ = "alert_incidents"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    pond_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ponds.id"),
+        nullable=False,
+    )
+
+    detected_at = db.Column(db.DateTime, nullable=False)
+    last_updated_at = db.Column(db.DateTime, nullable=False)
+    acknowledged_at = db.Column(db.DateTime, nullable=True)
+    recovered_at = db.Column(db.DateTime, nullable=True)
+
+    status = db.Column(
+        db.String(20),
+        nullable=False,
+        default="ACTIVE",
+    )
+
+    parameters = db.relationship(
+        "IncidentParameter",
+        backref="incident",
+        cascade="all, delete-orphan",
+        lazy=True,
+    )
+
+
+class IncidentParameter(db.Model):
+    __tablename__ = "incident_parameters"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    incident_id = db.Column(
+        db.Integer,
+        db.ForeignKey("alert_incidents.id"),
+        nullable=False,
+    )
+
+    parameter = db.Column(db.String(20), nullable=False)
+
+    first_detected_at = db.Column(db.DateTime, nullable=False)
+    last_updated_at = db.Column(db.DateTime, nullable=False)
+
+    latest_value = db.Column(db.Float, nullable=False)
+    severity = db.Column(db.String(20), nullable=False)
+    direction = db.Column(db.String(10), nullable=False)
+
+    recovered_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "incident_id",
+            "parameter",
+            name="unique_incident_parameter",
+        ),
+    )
+
+
+class SMSCommand(db.Model):
+    __tablename__ = "sms_commands"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    incident_id = db.Column(
+        db.Integer,
+        db.ForeignKey("alert_incidents.id"),
+        nullable=True,
+    )
+
+    phone_number = db.Column(db.String(20), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
+    status = db.Column(
+        db.String(20),
+        nullable=False,
+        default="PENDING",
+        index=True,
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
+    sent_at = db.Column(db.DateTime, nullable=True)

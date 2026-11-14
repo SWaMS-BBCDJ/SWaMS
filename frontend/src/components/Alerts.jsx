@@ -1,10 +1,20 @@
+
 import "../styles/Alerts.css";
 
-/* Split a timestamp into a date line and a time line */
+/* Format timestamps using Philippine time.
+   Backend timestamps are stored as UTC without a timezone suffix. */
 function splitDateTime(recordedAt) {
-  const d = recordedAt ? new Date(recordedAt) : null;
+  if (!recordedAt) {
+    return { date: "Time unavailable", time: "" };
+  }
 
-  if (!d || Number.isNaN(d.getTime())) {
+  const timestamp = /Z$|[+-]\d{2}:\d{2}$/.test(recordedAt)
+    ? recordedAt
+    : `${recordedAt}Z`;
+
+  const d = new Date(timestamp);
+
+  if (Number.isNaN(d.getTime())) {
     return { date: "Time unavailable", time: "" };
   }
 
@@ -15,7 +25,6 @@ function splitDateTime(recordedAt) {
       day: "numeric",
       year: "numeric",
     }),
-
     time: d.toLocaleTimeString("en-PH", {
       timeZone: "Asia/Manila",
       hour: "numeric",
@@ -27,25 +36,9 @@ function splitDateTime(recordedAt) {
 }
 
 function Alerts({ alerts = [] }) {
-  const groupedAlerts = Object.values(
-    alerts.reduce((groups, alert) => {
-      const key = alert.recordedAt || alert.id;
-
-      if (!groups[key]) {
-        groups[key] = {
-          recordedAt: alert.recordedAt,
-          items: [],
-        };
-      }
-
-      groups[key].items.push(alert);
-      return groups;
-    }, {})
-  ).reverse();
-
   return (
     <div className="alert-list">
-      {groupedAlerts.length === 0 ? (
+      {alerts.length === 0 ? (
         <div className="no-alerts">
           <div className="no-alerts-main">SAFE</div>
           <div className="no-alerts-subtitle">
@@ -53,48 +46,99 @@ function Alerts({ alerts = [] }) {
           </div>
         </div>
       ) : (
-        groupedAlerts.map((group, index) => {
-          const { date, time } = splitDateTime(group.recordedAt);
+        alerts.map((incident) => {
+          const { date, time } = splitDateTime(
+            incident.detected_at
+          );
+
+          const statusClass =
+            incident.status === "ACTIVE"
+              ? "active"
+              : "recovered";
 
           return (
-            <div className="alert-group" key={group.recordedAt || index}>
-
-              {/* LEFT: date on top, time below */}
+            <div className="alert-group" key={incident.id}>
+              {/* LEFT: Date, time and incident status */}
               <div className="alert-group-time">
-                <div className="alert-group-date">{date}</div>
-                {time && <div className="alert-group-clock">{time}</div>}
+                <div className="alert-group-date">
+                  {date}
+                </div>
+
+                {time && (
+                  <div className="alert-group-clock">
+                    {time}
+                  </div>
+                )}
+
+                <div className={`alert-group-status ${statusClass}`}>
+                  {incident.status}
+                </div>
               </div>
 
-              {/* RIGHT: count + alerts */}
+              {/* RIGHT: Incident details */}
               <div className="alert-group-body">
+                <div className="alert-item-header">
+                  INC-{String(incident.id).padStart(3, "0")}
+                </div>
 
-                {group.items.map((alert) => {
+                {incident.parameters?.map((parameter) => {
                   const severity =
-                    alert.severity === "danger" ? "danger" : "warning";
+                    parameter.severity === "CRITICAL"
+                      ? "danger"
+                      : parameter.severity === "WARNING"
+                        ? "warning"
+                        : "";
 
                   return (
                     <div
                       className={`alert-item alert-${severity}`}
-                      key={alert.id}
+                      key={parameter.parameter}
                     >
                       <div className="alert-item-header">
                         <span className="alert-parameter">
-                          {alert.parameter}
+                          {parameter.parameter}
                         </span>
 
                         <span className="alert-value">
-                          {alert.value}
+                          {parameter.latest_value}
+                          {parameter.parameter === "temperature"
+                            ? " °C"
+                            : parameter.parameter === "turbidity"
+                              ? " NTU"
+                              : ""}
                         </span>
                       </div>
 
                       <p className="alert-message">
-                        {alert.message}
+                        Severity: {parameter.severity}
+                        {" | "}
+                        Direction: {parameter.direction}
                       </p>
+
+                      {parameter.recovered_at && (
+                        <p className="alert-message">
+                          Parameter recovered:{" "}
+                          {splitDateTime(parameter.recovered_at).time}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
-              </div>
 
+                {incident.acknowledged_at && (
+                  <p className="alert-message">
+                    Acknowledged:{" "}
+                    {splitDateTime(incident.acknowledged_at).time}
+                  </p>
+                )}
+
+                {incident.recovered_at && (
+                  <p className="alert-message">
+                    Incident recovered:{" "}
+                    {splitDateTime(incident.recovered_at).time}
+                  </p>
+                )}
+              </div>
             </div>
           );
         })

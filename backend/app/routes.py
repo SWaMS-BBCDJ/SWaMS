@@ -6,6 +6,7 @@ import re
 import math
 
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint,
@@ -17,7 +18,17 @@ from flask import (
 from sqlalchemy import func
 
 from app import db
-from app.models import AlertLog, LiveReading, Pond, Reading, Threshold
+from app.models import (
+    AlertIncident,
+    AlertLog,
+    HourlyReadingBuffer,
+    IncidentParameter,
+    LiveReading,
+    Pond,
+    Reading,
+    SMSCommand,
+    Threshold,
+)
 from app.services.thresholds import evaluate, log_alerts
 
 
@@ -130,24 +141,30 @@ def parse_date(value):
 
 def build_alert_query(start_date=None, end_date=None, parameter=None):
 
-    query = AlertLog.query
+    query = AlertIncident.query
 
     if start_date:
         start_datetime = datetime.combine(start_date, time.min)
-        query = query.filter(AlertLog.sent_at >= start_datetime)
+        query = query.filter(
+            AlertIncident.detected_at >= start_datetime
+        )
 
     if end_date:
         end_datetime = datetime.combine(
             end_date + timedelta(days=1),
             time.min,
         )
-        query = query.filter(AlertLog.sent_at < end_datetime)
+        query = query.filter(
+            AlertIncident.detected_at < end_datetime
+        )
 
     if parameter and parameter.lower() in {
         "ph", "temperature", "turbidity"
     }:
         query = query.filter(
-            func.lower(AlertLog.parameter) == parameter.lower()
+            AlertIncident.parameters.any(
+                func.lower(IncidentParameter.parameter) == parameter.lower()
+            )
         )
 
     return query
@@ -186,19 +203,50 @@ def get_alert_date_range():
     return None, None, "Invalid period. Use today, 7days, 28days, or custom."
 
 
-def serialize_alert(alert):
+def serialize_alert(incident):
 
     return {
-        "id": alert.id,
-        "parameter": alert.parameter,
-        "value": alert.value,
-        "message": alert.message,
-        "sent_at": (
-            alert.sent_at.isoformat()
-            if alert.sent_at else None
+        "id": incident.id,
+        "pond_id": incident.pond_id,
+        "detected_at": (
+            incident.detected_at.isoformat()
+            if incident.detected_at else None
         ),
+        "last_updated_at": (
+            incident.last_updated_at.isoformat()
+            if incident.last_updated_at else None
+        ),
+        "acknowledged_at": (
+            incident.acknowledged_at.isoformat()
+            if incident.acknowledged_at else None
+        ),
+        "recovered_at": (
+            incident.recovered_at.isoformat()
+            if incident.recovered_at else None
+        ),
+        "status": incident.status,
+        "parameters": [
+            {
+                "parameter": p.parameter,
+                "first_detected_at": (
+                    p.first_detected_at.isoformat()
+                    if p.first_detected_at else None
+                ),
+                "last_updated_at": (
+                    p.last_updated_at.isoformat()
+                    if p.last_updated_at else None
+                ),
+                "latest_value": p.latest_value,
+                "severity": p.severity,
+                "direction": p.direction,
+                "recovered_at": (
+                    p.recovered_at.isoformat()
+                    if p.recovered_at else None
+                ),
+            }
+            for p in incident.parameters
+        ],
     }
-
 
 # ==========================================
 # DASHBOARD
@@ -322,9 +370,9 @@ def alerts():
     total = query.count()
 
     records = query.order_by(
-        AlertLog.sent_at.desc(),
-        AlertLog.id.desc(),
-    ).offset((page - 1) * per_page).limit(per_page).all()
+    AlertIncident.detected_at.desc(),
+    AlertIncident.id.desc(),
+).offset((page - 1) * per_page).limit(per_page).all()
 
     return jsonify(
         alerts=[serialize_alert(alert) for alert in records],
@@ -388,8 +436,28 @@ def ingest():
         return jsonify(error="no pond configured"), 409
 
     
-    # Current measurement timestamp
+    
+    # Current measurement timestamp (UTC, stored as naive datetime)
     measurement_time = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Convert measurement time to Philippine time
+    measurement_time_ph = measurement_time.replace(
+        tzinfo=timezone.utc
+    ).astimezone(ZoneInfo("Asia/Manila"))
+
+    # Get the beginning of the current Philippine-time hour
+    hour_start_ph = measurement_time_ph.replace(
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+    # Store the hour start in UTC
+    hour_start_utc = (
+        hour_start_ph
+        .astimezone(timezone.utc)
+        .replace(tzinfo=None)
+    )
 
     # ==========================================
     # 1. UPDATE LIVE READING
@@ -407,9 +475,7 @@ def ingest():
             temperature=temperature,
             turbidity=turbidity,
         )
-
         db.session.add(live_reading)
-
     else:
         live_reading.timestamp = measurement_time
         live_reading.ph = ph
@@ -417,48 +483,32 @@ def ingest():
         live_reading.turbidity = turbidity
 
     # ==========================================
-    # 2. FIND CURRENT HOURLY RECORD
+    # 2. UPDATE CURRENT HOURLY BUFFER
     # ==========================================
 
-    hour_start = measurement_time.replace(
-        minute=0,
-        second=0,
-        microsecond=0
-    )
-
-    hour_end = hour_start + timedelta(hours=1)
-
-    reading = Reading.query.filter(
-        Reading.pond_id == pond.id,
-        Reading.timestamp >= hour_start,
-        Reading.timestamp < hour_end,
+    buffer = HourlyReadingBuffer.query.filter_by(
+        pond_id=pond.id,
+        hour_start=hour_start_utc,
     ).first()
 
-    # ==========================================
-    # 3. CREATE OR UPDATE HOURLY RECORD
-    # ==========================================
-
-    if reading is None:
-
-        reading = Reading(
+    if buffer is None:
+        buffer = HourlyReadingBuffer(
             pond_id=pond.id,
-            timestamp=measurement_time,
+            hour_start=hour_start_utc,
             ph=ph,
             temperature=temperature,
             turbidity=turbidity,
         )
-
-        db.session.add(reading)
-
+        db.session.add(buffer)
     else:
+        # Keep the latest valid reading received this hour
+        buffer.ph = ph
+        buffer.temperature = temperature
+        buffer.turbidity = turbidity
 
-        reading.timestamp = measurement_time
-        reading.ph = ph
-        reading.temperature = temperature
-        reading.turbidity = turbidity
-
-    db.session.flush()
-
+    # ==========================================
+    # 3. EVALUATE CURRENT SENSOR VALUES
+    # ==========================================
 
     breaches = evaluate({
         "ph": ph,
@@ -466,21 +516,44 @@ def ingest():
         "turbidity": turbidity,
     })
 
-    reading.is_anomalous = bool(breaches)
+    # Keep the existing alert logging behavior for now.
+    # This temporary Reading object is NOT saved as history.
+    alert_reading = Reading(
+        pond_id=pond.id,
+        timestamp=measurement_time,
+        ph=ph,
+        temperature=temperature,
+        turbidity=turbidity,
+        is_anomalous=bool(breaches),
+    )
 
-    log_alerts(reading, breaches, db)
+    log_alerts(
+    alert_reading,
+    breaches,
+    db,
+    {
+        "ph": ph,
+        "temperature": temperature,
+        "turbidity": turbidity,
+    },
+)
+
+    # ==========================================
+    # 4. SAVE DATABASE CHANGES
+    # ==========================================
 
     db.session.commit()
 
     return jsonify(
-        id=reading.id,
-        is_anomalous=reading.is_anomalous,
+        id=live_reading.id,
+        is_anomalous=bool(breaches),
         breaches=breaches,
         alerts=[
             breach["parameter"]
             for breach in breaches
         ],
     ), 201
+
 
 
 # ==========================================
@@ -749,4 +822,74 @@ def update_operator_mobile():
         message="Operator mobile number saved successfully.",
         username=operator.username,
         mobile_number=operator.mobile_number,
+    ), 200
+
+
+# ==========================================
+# ESP32 SMS COMMAND QUEUE
+# ==========================================
+
+@main.post("/api/device/sms-commands/next")
+def get_next_sms_command():
+
+    key = request.headers.get("X-Device-Key")
+
+    if key != current_app.config["DEVICE_API_KEY"]:
+        return jsonify(error="unauthorized"), 401
+
+    command = SMSCommand.query.filter_by(
+        status="PENDING"
+    ).order_by(
+        SMSCommand.created_at.asc(),
+        SMSCommand.id.asc(),
+    ).first()
+
+    if command is None:
+        return jsonify(command=None), 200
+
+    command.status = "SENDING"
+    db.session.commit()
+
+    return jsonify(
+        command={
+            "id": command.id,
+            "phone_number": command.phone_number,
+            "message": command.message,
+        }
+    ), 200
+
+
+@main.post("/api/device/sms-commands/<int:command_id>/result")
+def update_sms_command_result(command_id):
+
+    key = request.headers.get("X-Device-Key")
+
+    if key != current_app.config["DEVICE_API_KEY"]:
+        return jsonify(error="unauthorized"), 401
+
+    command = db.session.get(SMSCommand, command_id)
+
+    if command is None:
+        return jsonify(error="command not found"), 404
+
+    if command.status != "SENDING":
+        return jsonify(error="command is not awaiting a result"), 409
+
+    data = request.get_json(silent=True) or {}
+    result = str(data.get("status", "")).strip().upper()
+
+    if result not in ("SENT", "FAILED"):
+        return jsonify(error="status must be SENT or FAILED"), 400
+
+    command.status = result
+
+    if result == "SENT":
+        command.sent_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify(
+        message="SMS command result saved",
+        command_id=command.id,
+        status=command.status,
     ), 200

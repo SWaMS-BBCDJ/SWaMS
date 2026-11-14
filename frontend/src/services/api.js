@@ -205,3 +205,38 @@ export async function getLatestReading() {
 
   return await handleResponse(response);
 }
+
+
+/* =========================================================
+   GET ALERT INCIDENTS
+   ========================================================= */
+
+// Flask endpoint:
+// GET /api/alerts
+//
+// Retrieves incident records, including affected parameters,
+// severity, acknowledgment, and recovery information.
+
+export async function getAlerts({ startDate = "", endDate = "" } = {}) {
+  const params = new URLSearchParams();
+
+  if (startDate && endDate) {
+    params.set("period", "custom");
+    params.set("from", startDate);
+    params.set("to", endDate);
+  } else {
+    params.set("period", "7days");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/alerts?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return await handleResponse(response);
+}

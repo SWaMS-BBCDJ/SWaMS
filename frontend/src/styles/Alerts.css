@@ -1,6 +1,6 @@
+
 /* =========================================================
-   ALERTS (compact, grouped)
-   Import in components/Alerts.jsx:  import "../styles/Alerts.css";
+   ALERTS - COMPACT, GROUPED INCIDENTS
    ========================================================= */
 
 .monitoring-column .alert-list,
@@ -20,7 +20,7 @@
   scrollbar-color: #CBD5E1 #F8FAFC;
 }
 
-/* ---------- One group: time LEFT | alerts RIGHT ---------- */
+/* ---------- One incident group ---------- */
 
 .alert-group {
   display: flex;
@@ -32,25 +32,47 @@
   border-radius: 8px;
 }
 
-/* LEFT: date + time stacked */
+/* LEFT: Date, time and status */
+
 .alert-group-time {
-  flex: 0 0 78px;
+  flex: 0 0 90px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 4px;
   padding-top: 4px;
 }
 
 .alert-group-date,
 .alert-group-clock {
   display: block;
-  color: #475569;          /* same as the Logs table text */
-  font-size: 11px;         /* same as the Logs table text */
-  font-weight: 400;        /* not bold */
+  color: #475569;
+  font-size: 11px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
-/* RIGHT: count + alert items */
+/* Incident status: text only */
+
+.alert-group-status {
+  margin-top: 4px;
+  padding: 0;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.alert-group-status.active {
+  color: #DC2626;
+}
+
+.alert-group-status.recovered {
+  color: #16A34A;
+}
+
+/* RIGHT: Incident details */
+
 .alert-group-body {
   flex: 1;
   min-width: 0;
@@ -66,7 +88,7 @@
   color: var(--muted);
 }
 
-/* ---------- Alert items ---------- */
+/* ---------- Alert parameter items ---------- */
 
 .alert-item {
   width: 100%;
@@ -150,9 +172,7 @@
   line-height: 1.5;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* ---------- Responsive ---------- */
 
 @media (max-width: 420px) {
   .alert-group {
@@ -163,5 +183,9 @@
   .alert-group-time {
     flex: none;
     padding-top: 0;
+  }
+
+  .alert-group-status {
+    margin-top: 2px;
   }
 }

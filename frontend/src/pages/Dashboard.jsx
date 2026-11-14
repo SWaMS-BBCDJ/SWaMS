@@ -20,6 +20,7 @@ import {
   getReadingHistory,
   getLatestReading,
   getThresholds,
+  getAlerts,
 } from "../services/api";
 
 
@@ -232,6 +233,10 @@ function Dashboard() {
   // Sensor readings from Flask.
   const [readings, setReadings] = useState([]);
 
+  // Alert incidents from Flask.
+  const [incidentAlerts, setIncidentAlerts] = useState([]);
+  const [alertError, setAlertError] = useState("");
+
   // Latest live reading from the LiveReading database table.
   const [latestLiveReading, setLatestLiveReading] = useState(null);
 
@@ -366,6 +371,46 @@ function Dashboard() {
 
   }, []);
 
+  /* =======================================================
+   FETCH ALERT INCIDENTS
+
+   Retrieves incident records from Flask.
+   Refreshes every 5 seconds.
+   ======================================================= */
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchIncidentAlerts() {
+      try {
+        const data = await getAlerts({
+          startDate,
+          endDate,
+        });
+
+        if (active) {
+          setIncidentAlerts(
+            Array.isArray(data.alerts) ? data.alerts : []
+          );
+          setAlertError("");
+        }
+      } catch (error) {
+        if (active) {
+          setAlertError(error.message);
+        }
+      }
+    }
+
+    fetchIncidentAlerts();
+
+    const timer = setInterval(fetchIncidentAlerts, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [startDate, endDate]);
+
 
   /* =======================================================
      7. FETCH SENSOR THRESHOLDS
@@ -465,7 +510,7 @@ function Dashboard() {
 
     fetchLatestReading();
 
-    const timer = setInterval(fetchLatestReading, 10000);
+    const timer = setInterval(fetchLatestReading, 5000);
 
     return () => {
       active = false;
@@ -606,38 +651,7 @@ function Dashboard() {
      Checks all readings within the selected date range.
      ======================================================= */
 
-  const currentAlerts = useMemo(() => {
-
-    return filteredReadings.flatMap((reading) => {
-
-      const statuses = {
-
-        phStatus: getParameterStatus(
-          "ph",
-          reading.ph,
-          thresholds?.ph
-        ),
-
-        temperatureStatus: getParameterStatus(
-          "temperature",
-          reading.temperature,
-          thresholds?.temperature
-        ),
-
-        turbidityStatus: getParameterStatus(
-          "turbidity",
-          reading.turbidity,
-          thresholds?.turbidity
-        ),
-
-      };
-
-      return createAlerts(reading, statuses);
-
-    });
-
-  }, [filteredReadings, thresholds]);
-
+  const currentAlerts = incidentAlerts;
 
   /* =======================================================
      14. CHART LABELS
@@ -719,7 +733,7 @@ function Dashboard() {
 
           <LatestReading
             reading={liveReading}
-            status={latestReadingStatus}
+            status={overallStatus}
           />
 
         </div>
