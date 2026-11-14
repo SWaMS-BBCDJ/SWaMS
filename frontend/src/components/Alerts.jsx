@@ -51,10 +51,31 @@ function Alerts({ alerts = [] }) {
             incident.detected_at
           );
 
+          // Get parameters that have not recovered yet
+          const unrecoveredParameters = (
+            incident.parameters || []
+          ).filter(
+            (parameter) => !parameter.recovered_at
+          );
+
+          // Check remaining abnormal parameters
+          const hasCritical = unrecoveredParameters.some(
+            (parameter) => parameter.severity === "CRITICAL"
+          );
+
+          const hasWarning = unrecoveredParameters.some(
+            (parameter) => parameter.severity === "WARNING"
+          );
+
+          // Determine incident status color
           const statusClass =
-            incident.status === "ACTIVE"
-              ? "active"
-              : "recovered";
+            incident.status === "RECOVERED"
+              ? "recovered"
+              : hasCritical
+                ? "active"
+                : hasWarning
+                  ? "warning"
+                  : "active";
 
           return (
             <div className="alert-group" key={incident.id}>
@@ -77,13 +98,27 @@ function Alerts({ alerts = [] }) {
 
               {/* RIGHT: Incident details */}
               <div className="alert-group-body">
-                <div className="alert-item-header">
+
+              {/* Incident number and acknowledgment indicator */}
+              <div className="alert-incident-heading">
+
+                <span className="alert-incident-id">
                   INC-{String(incident.id).padStart(3, "0")}
-                </div>
+                </span>
+
+                {incident.acknowledged_at && (
+                  <span className="alert-acknowledged">
+                    ACKNOWLEDGED
+                  </span>
+                )}
+
+              </div>
 
                 {incident.parameters?.map((parameter) => {
-                  const severity =
-                    parameter.severity === "CRITICAL"
+                  // Recovered parameters always appear gray
+                  const severity = parameter.recovered_at
+                    ? "recovered"
+                    : parameter.severity === "CRITICAL"
                       ? "danger"
                       : parameter.severity === "WARNING"
                         ? "warning"
@@ -110,9 +145,9 @@ function Alerts({ alerts = [] }) {
                       </div>
 
                       <p className="alert-message">
-                        Severity: {parameter.severity}
-                        {" | "}
-                        Direction: {parameter.direction}
+                        {parameter.recovered_at
+                          ? "RECOVERED"
+                          : `Severity: ${parameter.severity} | Direction: ${parameter.direction}`}
                       </p>
 
                       {parameter.recovered_at && (

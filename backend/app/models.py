@@ -56,6 +56,32 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
     
 
+
+class SensorReading(db.Model):
+    __tablename__ = "sensor_readings"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    pond_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ponds.id"),
+        nullable=False,
+        index=True
+    )
+
+    timestamp = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        index=True
+    )
+
+    ph = db.Column(db.Float, nullable=False)
+    temperature = db.Column(db.Float, nullable=False)
+    turbidity = db.Column(db.Float, nullable=False)
+
+
+
 class LiveReading(db.Model):
     __tablename__ = "live_readings"
 

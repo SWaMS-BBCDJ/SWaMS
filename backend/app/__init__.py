@@ -28,7 +28,8 @@ def create_app(config_class="config.Config"):
     # Start the hourly logging scheduler only once.
     if _scheduler is None or not _scheduler.running:
         from app.services.hourly_logs import finalize_completed_hours
-
+        from app.services.sms_reminders import check_sms_reminders
+        
         def finalize_with_app_context():
             with app.app_context():
                 finalize_completed_hours()
@@ -53,6 +54,22 @@ def create_app(config_class="config.Config"):
             max_instances=1,
         )
 
+        def check_reminders_with_app_context():
+            with app.app_context():
+                check_sms_reminders()
+
+
+        _scheduler.add_job(
+            check_reminders_with_app_context,
+            trigger="interval",
+            minutes=1,
+            id="sms_reminder_checker",
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1,
+        )
+
         _scheduler.start()
+        
 
     return app

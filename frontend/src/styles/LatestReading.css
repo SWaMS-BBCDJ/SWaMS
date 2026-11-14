@@ -13,20 +13,12 @@
   border-radius: var(--radius);
 }
 
-/* Overall water quality status */
-.latest-reading-container.safe {
+/* Device connection status */
+.latest-reading-container.receiving {
   border-top-color: #16A34A;
 }
 
-.latest-reading-container.warning {
-  border-top-color: #D97706;
-}
-
-.latest-reading-container.danger {
-  border-top-color: #DC2626;
-}
-
-.latest-reading-container.not-evaluated {
+.latest-reading-container.not-receiving {
   border-top-color: #94A3B8;
 }
 

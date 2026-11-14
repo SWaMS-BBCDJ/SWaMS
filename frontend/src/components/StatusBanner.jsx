@@ -1,5 +1,7 @@
 
-function StatusBanner({ status }) {
+import "../styles/StatusBanner.css";
+
+function StatusBanner({ status, isConnected }) {
   const normalizedStatus = String(status || "")
     .trim()
     .toUpperCase();
@@ -21,7 +23,15 @@ function StatusBanner({ status }) {
   return (
     <section className="safe-container">
       <div className={`safe-box ${statusClass}`}>
-        {displayStatus}
+        <div className="status-banner-content">
+          <span>{displayStatus}</span>
+
+          {!isConnected && (
+            <span className="offline-label">
+              LAST KNOWN STATUS — DEVICE OFFLINE
+            </span>
+          )}
+        </div>
       </div>
     </section>
   );

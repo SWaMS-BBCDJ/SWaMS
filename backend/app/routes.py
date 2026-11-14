@@ -26,10 +26,11 @@ from app.models import (
     LiveReading,
     Pond,
     Reading,
+    SensorReading,
     SMSCommand,
     Threshold,
 )
-from app.services.thresholds import evaluate, log_alerts
+from app.services.thresholds import evaluate, log_alerts, get_limits
 
 
 main = Blueprint("main", __name__)
@@ -61,7 +62,7 @@ def queue_initial_critical_sms(incident, breaches):
     message = (
         f"SWaMS CRITICAL ALERT: Incident INC-{incident.id:03d} "
         "detected. Check the SWaMS dashboard. "
-        f"Reply ACK INC-{incident.id:03d} to acknowledge."
+        "Reply ACK to acknowledge."
     )
 
     command = SMSCommand(
@@ -499,7 +500,21 @@ def ingest():
     )
 
     # ==========================================
-    # 1. UPDATE LIVE READING
+    # 1. SAVE INDIVIDUAL SENSOR READING
+    # ==========================================
+
+    sensor_reading = SensorReading(
+        pond_id=pond.id,
+        timestamp=measurement_time,
+        ph=ph,
+        temperature=temperature,
+        turbidity=turbidity,
+    )
+
+    db.session.add(sensor_reading)
+
+    # ==========================================
+    # 2. UPDATE LIVE READING
     # ==========================================
 
     live_reading = LiveReading.query.filter_by(
@@ -522,7 +537,7 @@ def ingest():
         live_reading.turbidity = turbidity
 
     # ==========================================
-    # 2. UPDATE CURRENT HOURLY BUFFER
+    # 3. UPDATE CURRENT HOURLY BUFFER
     # ==========================================
 
     buffer = HourlyReadingBuffer.query.filter_by(
@@ -546,7 +561,7 @@ def ingest():
         buffer.turbidity = turbidity
 
     # ==========================================
-    # 3. EVALUATE CURRENT SENSOR VALUES
+    # 4. EVALUATE CURRENT SENSOR VALUES
     # ==========================================
 
     breaches = evaluate({
@@ -554,6 +569,10 @@ def ingest():
         "temperature": temperature,
         "turbidity": turbidity,
     })
+
+    print("DEBUG UPLOAD VALUES:", ph, temperature, turbidity)
+    print("DEBUG UPLOAD BREACHES:", breaches)
+    print("DEBUG UPLOAD LIMITS:", get_limits())
 
     # Keep the existing alert logging behavior for now.
     # This temporary Reading object is NOT saved as history.
@@ -567,15 +586,15 @@ def ingest():
     )
 
     log_alerts(
-    alert_reading,
-    breaches,
-    db,
-    {
-        "ph": ph,
-        "temperature": temperature,
-        "turbidity": turbidity,
-    },
-)
+        alert_reading,
+        breaches,
+        db,
+        {
+            "ph": ph,
+            "temperature": temperature,
+            "turbidity": turbidity,
+        },
+    )
 
     active_incident = AlertIncident.query.filter_by(
         pond_id=pond.id,
@@ -588,7 +607,7 @@ def ingest():
         queue_initial_critical_sms(active_incident, breaches)
 
     # ==========================================
-    # 4. SAVE DATABASE CHANGES
+    # 5. SAVE DATABASE CHANGES
     # ==========================================
 
     db.session.commit()
@@ -941,4 +960,70 @@ def update_sms_command_result(command_id):
         message="SMS command result saved",
         command_id=command.id,
         status=command.status,
+    ), 200
+
+
+@main.post("/api/device/sms/receive")
+def receive_incoming_sms():
+
+    key = request.headers.get("X-Device-Key")
+
+    if key != current_app.config["DEVICE_API_KEY"]:
+        return jsonify(error="unauthorized"), 401
+
+    data = request.get_json(silent=True) or {}
+
+    sender = str(data.get("sender", "")).strip()
+    message = str(data.get("message", "")).strip().upper()
+
+    if not sender or not message:
+        return jsonify(error="sender and message are required"), 400
+
+    # Accept only ACK
+    if message != "ACK":
+        return jsonify(error="unsupported SMS command"), 400
+
+    operator = User.query.filter_by(role="operator").first()
+
+    if not operator or not operator.mobile_number:
+        return jsonify(error="operator number not configured"), 409
+
+    # Normalize phone numbers before comparing
+    sender_number = re.sub(r"\D", "", sender)
+    operator_number = re.sub(r"\D", "", operator.mobile_number)
+
+    if sender_number.startswith("0"):
+        sender_number = "63" + sender_number[1:]
+
+    if operator_number.startswith("0"):
+        operator_number = "63" + operator_number[1:]
+
+    if sender_number != operator_number:
+        return jsonify(error="unauthorized sender"), 403
+
+    # Find the latest active incident
+    incident = AlertIncident.query.filter_by(
+        status="ACTIVE"
+    ).order_by(
+        AlertIncident.detected_at.desc()
+    ).first()
+
+    if incident is None:
+        return jsonify(error="no active incident to acknowledge"), 404
+
+    # Avoid resetting the cooldown on repeated ACK messages
+    if incident.acknowledged_at is not None:
+        return jsonify(
+            message="incident already acknowledged",
+            incident_id=incident.id,
+        ), 200
+
+    incident.acknowledged_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify(
+        message="incident acknowledged successfully",
+        incident_id=incident.id,
+        acknowledged_at=incident.acknowledged_at.isoformat(),
     ), 200

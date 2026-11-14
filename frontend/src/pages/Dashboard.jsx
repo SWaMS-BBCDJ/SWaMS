@@ -613,36 +613,36 @@ function Dashboard() {
      ======================================================= */
 
   
+  
   const phStatus = getParameterStatus(
     "ph",
-    isReceivingReadings ? liveReading?.ph : null,
+    liveReading?.ph,
     thresholds?.ph
   );
 
   const temperatureStatus = getParameterStatus(
     "temperature",
-    isReceivingReadings ? liveReading?.temperature : null,
+    liveReading?.temperature,
     thresholds?.temperature
   );
 
   const turbidityStatus = getParameterStatus(
     "turbidity",
-    isReceivingReadings ? liveReading?.turbidity : null,
+    liveReading?.turbidity,
     thresholds?.turbidity
   );
+
 
 
   /* =======================================================
      12. OVERALL WATER QUALITY STATUS
      ======================================================= */
 
-  const overallStatus = !isReceivingReadings
-    ? "NOT EVALUATED"
-    : getOverallStatus([
-        phStatus,
-        temperatureStatus,
-        turbidityStatus,
-      ]);
+  const overallStatus = getOverallStatus([
+    phStatus,
+    temperatureStatus,
+    turbidityStatus,
+  ]);
 
 
   /* =======================================================
@@ -733,7 +733,7 @@ function Dashboard() {
 
           <LatestReading
             reading={liveReading}
-            status={overallStatus}
+            status={latestReadingStatus}
           />
 
         </div>
