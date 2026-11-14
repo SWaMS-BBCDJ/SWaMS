@@ -35,6 +35,45 @@ from app.services.thresholds import evaluate, log_alerts
 main = Blueprint("main", __name__)
 
 
+def queue_initial_critical_sms(incident, breaches):
+    """Queue one initial SMS when a new critical incident starts."""
+
+    if not any(
+        breach.get("severity", "").lower() == "critical"
+        for breach in breaches
+    ):
+        return
+
+    existing_command = SMSCommand.query.filter(
+        SMSCommand.incident_id == incident.id,
+        SMSCommand.message.like("SWaMS CRITICAL ALERT:%"),
+    ).first()
+
+    if existing_command:
+        return
+
+    operator = User.query.filter_by(role="operator").first()
+
+    if not operator or not operator.mobile_number:
+        print("SMS NOT QUEUED: Operator mobile number is missing.")
+        return
+
+    message = (
+        f"SWaMS CRITICAL ALERT: Incident INC-{incident.id:03d} "
+        "detected. Check the SWaMS dashboard. "
+        f"Reply ACK INC-{incident.id:03d} to acknowledge."
+    )
+
+    command = SMSCommand(
+        incident_id=incident.id,
+        phone_number=operator.mobile_number,
+        message=message,
+        status="PENDING",
+    )
+
+    db.session.add(command)
+
+
 # ==========================================
 # USER AUTHORIZATION
 # ==========================================
@@ -537,6 +576,16 @@ def ingest():
         "turbidity": turbidity,
     },
 )
+
+    active_incident = AlertIncident.query.filter_by(
+        pond_id=pond.id,
+        status="ACTIVE",
+    ).order_by(
+        AlertIncident.detected_at.desc()
+    ).first()
+
+    if active_incident:
+        queue_initial_critical_sms(active_incident, breaches)
 
     # ==========================================
     # 4. SAVE DATABASE CHANGES
