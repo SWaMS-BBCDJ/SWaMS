@@ -13,3 +13,4 @@ Werkzeug==3.1.9
 APScheduler==3.11.3
 psycopg[binary]==3.3.9
 gunicorn==27.0.1
+flask-cors==6.0.5

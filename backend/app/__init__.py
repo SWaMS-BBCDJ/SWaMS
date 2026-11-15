@@ -14,17 +14,28 @@ db = SQLAlchemy()
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 _scheduler = None
 
-
-
 def create_app(config_class="config.Config"):
     global _scheduler
 
     app = Flask(__name__)
     app.config.from_object(config_class)
-    CORS(app, origins=[frontend_url])
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "https://s-wa-ms.vercel.app",
+                    "https://swams-frontend.vercel.app"
+                ]
+            }
+        },
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"]
+    )
+    
     db.init_app(app)
 
-    
+
 
     from app.routes import main
     app.register_blueprint(main)
