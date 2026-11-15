@@ -25,12 +25,6 @@ function StatusBanner({ status, isConnected }) {
       <div className={`safe-box ${statusClass}`}>
         <div className="status-banner-content">
           <span>{displayStatus}</span>
-
-          {!isConnected && (
-            <span className="offline-label">
-              LAST KNOWN STATUS — DEVICE OFFLINE
-            </span>
-          )}
         </div>
       </div>
     </section>

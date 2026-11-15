@@ -536,29 +536,46 @@ def ingest():
         live_reading.temperature = temperature
         live_reading.turbidity = turbidity
 
+
     # ==========================================
     # 3. UPDATE CURRENT HOURLY BUFFER
     # ==========================================
 
-    buffer = HourlyReadingBuffer.query.filter_by(
+
+    finalized_reading = Reading.query.filter_by(
         pond_id=pond.id,
-        hour_start=hour_start_utc,
+        timestamp=hour_start_utc + timedelta(hours=1),
     ).first()
 
-    if buffer is None:
-        buffer = HourlyReadingBuffer(
+    if finalized_reading is None:
+
+        buffer = HourlyReadingBuffer.query.filter_by(
             pond_id=pond.id,
             hour_start=hour_start_utc,
-            ph=ph,
-            temperature=temperature,
-            turbidity=turbidity,
-        )
-        db.session.add(buffer)
+        ).first()
+
+        if buffer is None:
+            buffer = HourlyReadingBuffer(
+                pond_id=pond.id,
+                hour_start=hour_start_utc,
+                ph=ph,
+                temperature=temperature,
+                turbidity=turbidity,
+            )
+            db.session.add(buffer)
+
+        else:
+            # Keep the latest valid reading received this hour.
+            buffer.ph = ph
+            buffer.temperature = temperature
+            buffer.turbidity = turbidity
+
     else:
-        # Keep the latest valid reading received this hour
-        buffer.ph = ph
-        buffer.temperature = temperature
-        buffer.turbidity = turbidity
+        print(
+            f"HOURLY BUFFER NOT RECREATED: "
+            f"Hour already finalized for {hour_start_utc}"
+        )
+
 
     # ==========================================
     # 4. EVALUATE CURRENT SENSOR VALUES

@@ -8,15 +8,41 @@ class Pond(db.Model):
     location = db.Column(db.String(120), default="Claveria, Misamis Oriental")
     readings = db.relationship("Reading", backref="pond", lazy=True)
 
+
 class Reading(db.Model):
     __tablename__ = "readings"
+
     id = db.Column(db.Integer, primary_key=True)
-    pond_id = db.Column(db.Integer, db.ForeignKey("ponds.id"), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    pond_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ponds.id"),
+        nullable=False
+    )
+
+    timestamp = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        index=True
+    )
+
     ph = db.Column(db.Float)
     temperature = db.Column(db.Float)
     turbidity = db.Column(db.Float)
-    is_anomalous = db.Column(db.Boolean, default=False)
+
+    is_anomalous = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "pond_id",
+            "timestamp",
+            name="unique_pond_reading_timestamp"
+        ),
+    )
+
 
 class Threshold(db.Model):
     __tablename__ = "thresholds"

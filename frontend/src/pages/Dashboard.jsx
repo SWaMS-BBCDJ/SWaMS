@@ -576,8 +576,6 @@ function Dashboard() {
 
       })
 
-      .slice(0, 5)
-
       .map((reading) => {
 
         const statuses = [
@@ -651,7 +649,13 @@ function Dashboard() {
      Checks all readings within the selected date range.
      ======================================================= */
 
-  const currentAlerts = incidentAlerts;
+  const currentAlerts = useMemo(() => {
+    return [...incidentAlerts].sort(
+      (a, b) =>
+        new Date(b.detected_at).getTime() -
+        new Date(a.detected_at).getTime()
+    );
+  }, [incidentAlerts]);
 
   /* =======================================================
      14. CHART LABELS
