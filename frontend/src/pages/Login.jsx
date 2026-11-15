@@ -41,7 +41,7 @@ function Login() {
         <div className="login-brand">
           <img
             className="login-logo"
-            src="public/SWaMS_Logo.png"
+            src="SWaMS_Logo.png"
             alt="SWaMS logo"
           />
 
