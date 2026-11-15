@@ -12,7 +12,6 @@ from flask import (
     Blueprint,
     current_app,
     jsonify,
-    render_template,
     request,
 )
 from sqlalchemy import func
@@ -291,28 +290,6 @@ def serialize_alert(incident):
 # ==========================================
 # DASHBOARD
 # ==========================================
-
-@main.get("/")
-def dashboard():
-
-    latest_reading = Reading.query.order_by(
-        Reading.timestamp.desc(),
-        Reading.id.desc(),
-    ).first()
-
-    thresholds = {
-        item.parameter.lower(): {
-            "safe_min": item.safe_min,
-            "safe_max": item.safe_max,
-        }
-        for item in Threshold.query.all()
-    }
-
-    return render_template(
-        "dashboard.html",
-        latest_reading=latest_reading,
-        thresholds=thresholds,
-    )
 
 
 # ==========================================
@@ -916,6 +893,55 @@ def update_operator_mobile():
 # ==========================================
 # ESP32 SMS COMMAND QUEUE
 # ==========================================
+
+@main.post("/api/device/sms-alerts")
+def queue_sensor_alert_sms():
+
+    key = request.headers.get("X-Device-Key")
+
+    if key != current_app.config["DEVICE_API_KEY"]:
+        return jsonify(error="unauthorized"), 401
+
+    data = request.get_json(silent=True) or {}
+
+    message = str(data.get("message", "")).strip()
+
+    if not message:
+        return jsonify(error="message is required"), 400
+
+    if len(message) > 1000:
+        return jsonify(error="message is too long"), 400
+
+    operator, error = get_operator_account()
+
+    if error:
+        return error
+
+    if not operator.mobile_number:
+        return jsonify(error="operator mobile number is missing"), 409
+
+    command = SMSCommand(
+        incident_id=None,
+        phone_number=operator.mobile_number,
+        message=message,
+        status="PENDING",
+    )
+
+    try:
+        db.session.add(command)
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to queue sensor alert SMS")
+        return jsonify(error="failed to queue SMS"), 500
+
+    return jsonify(
+        message="Sensor alert SMS queued successfully",
+        command_id=command.id,
+        status=command.status,
+    ), 201
+
 
 @main.post("/api/device/sms-commands/next")
 def get_next_sms_command():

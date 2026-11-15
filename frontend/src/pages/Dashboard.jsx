@@ -8,7 +8,7 @@ import MetricCard from "../components/MetricCard";
 import Alerts from "../components/Alerts";
 import LogsTable from "../components/LogsTable";
 import DateFilter from "../components/DateFilter";
-import TrendChart from "../components/TrendChart";
+import HistoricalReadings from "../components/HistoricalReadings";
 import LatestReading from "../components/LatestReading";
 
 // Dashboard styles
@@ -29,25 +29,28 @@ import {
    ========================================================= */
 
 // Convert timestamps into YYYY-MM-DD format.
+
 function getCalendarDate(timestamp) {
   if (!timestamp) return "";
 
-  const value = String(timestamp);
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
-    return value.slice(0, 10);
-  }
-
-  const date = new Date(value);
+  const date = new Date(timestamp);
 
   if (Number.isNaN(date.getTime())) return "";
 
-  return `${date.getFullYear()}-${String(
-    date.getMonth() + 1
-  ).padStart(2, "0")}-${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year = parts.find(p => p.type === "year").value;
+  const month = parts.find(p => p.type === "month").value;
+  const day = parts.find(p => p.type === "day").value;
+
+  return `${year}-${month}-${day}`;
 }
+
 
 // Check if a reading belongs to the selected date range.
 function isWithinDateRange(timestamp, startDate, endDate) {
@@ -891,8 +894,8 @@ function Dashboard() {
               </div>
 
 
-              {/* HISTORICAL SENSOR TREND CHART */}
-              <TrendChart
+              {/* HISTORICAL SENSOR CHART */}
+              <HistoricalReadings
 
                 readings={filteredReadings}
 

@@ -1,5 +1,5 @@
 
-import "../styles/TrendChart.css";
+import "../styles/HistoricalReadings.css";
 import { useMemo } from "react";
 
 const MARGIN = { top: 14, right: 20, bottom: 55, left: 65 };
@@ -31,7 +31,7 @@ function formatTime(date) {
   };
 }
 
-function TrendChart({ readings = [], parameter, label }) {
+function HistoricalReadings({ readings = [], parameter, label }) {
 
   // Prepare and sort historical readings
   const data = useMemo(
@@ -280,4 +280,4 @@ function TrendChart({ readings = [], parameter, label }) {
   );
 }
 
-export default TrendChart;
+export default HistoricalReadings;

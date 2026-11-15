@@ -5,6 +5,6 @@
 @import "./LatestReading.css";
 @import "./MetricCard.css";
 @import "./DateFilter.css";
-@import "./TrendChart.css";
 @import "./LogsTable.css";
 @import "./Alerts.css";
+@import "./HistoricalReadings.css";

@@ -19,6 +19,8 @@ def create_app(config_class="config.Config"):
     CORS(app, origins=["http://localhost:5173"])
     db.init_app(app)
 
+    
+
     from app.routes import main
     app.register_blueprint(main)
 
