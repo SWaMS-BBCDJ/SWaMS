@@ -330,6 +330,7 @@ def health():
 
 
 @main.get("/api/readings/latest")
+@token_required
 def latest():
 
     reading = LiveReading.query.order_by(
@@ -358,6 +359,7 @@ def latest():
 # ==========================================
 
 @main.get("/api/readings/history")
+@token_required
 def history():
 
     rows = Reading.query.order_by(
@@ -383,6 +385,7 @@ def history():
 # ==========================================
 
 @main.get("/api/alerts")
+@token_required
 def alerts():
 
     start_date, end_date, error = get_alert_date_range()

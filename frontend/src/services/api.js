@@ -2,222 +2,166 @@
 /* =========================================================
    API SERVICE
    Connects React frontend to Flask backend.
+   Handles authentication for protected API requests.
    ========================================================= */
 
-// CHANGED: Centralized Flask backend URL.
-// Change this only if your Flask server uses another port.
 const API_BASE_URL = "http://localhost:5000";
 
-
 /* =========================================================
-   HELPER: GET AUTHENTICATION TOKEN
+   AUTHENTICATION HELPERS
    ========================================================= */
 
-// Retrieve the token saved during login.
 function getAuthToken() {
-
   return localStorage.getItem("token");
-
 }
 
+export function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+}
+
+function redirectToLogin() {
+  logout();
+
+  // Avoid repeatedly redirecting if already on the login page.
+  if (window.location.pathname !== "/login") {
+    window.location.replace("/login");
+  }
+}
 
 /* =========================================================
-   HELPER: HANDLE API RESPONSES
+   RESPONSE HANDLER
    ========================================================= */
 
-// CHANGED: Centralized response and error handling.
 async function handleResponse(response) {
-
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-
     throw new Error(
       data.message ||
       data.error ||
       `Request failed with status ${response.status}`
     );
-
   }
 
   return data;
-
 }
 
-
 /* =========================================================
-   1. GET HISTORICAL SENSOR READINGS
+   AUTHENTICATED API REQUEST
+   All protected dashboard requests use this helper.
    ========================================================= */
 
-// Flask endpoint:
-// GET /api/readings/history
-
-export async function getReadingHistory() {
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/readings/history`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  return await handleResponse(response);
-
-}
-
-
-/* =========================================================
-   2. GET SENSOR THRESHOLDS
-   ========================================================= */
-
-// Flask endpoint:
-// GET /api/settings/thresholds
-//
-// CHANGED:
-// Sends the Bearer authentication token.
-// Your Flask endpoint uses @token_required.
-
-export async function getThresholds() {
-
+async function authenticatedRequest(
+  endpoint,
+  options = {},
+  { notFoundAsNull = false } = {}
+) {
   const token = getAuthToken();
 
   if (!token) {
-
-    throw new Error(
-      "Authentication token not found. Please log in again."
-    );
-
+    redirectToLogin();
+    throw new Error("Please log in to continue.");
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/settings/thresholds`,
+    `${API_BASE_URL}${endpoint}`,
     {
-      method: "GET",
-
+      ...options,
       headers: {
         "Content-Type": "application/json",
-
+        ...options.headers,
         Authorization: `Bearer ${token}`,
       },
     }
   );
 
-  return await handleResponse(response);
+  // The backend rejected or expired the session.
+  if (response.status === 401) {
+    redirectToLogin();
+    throw new Error("Your session has expired. Please log in again.");
+  }
 
+  // No live sensor reading is available.
+  if (notFoundAsNull && response.status === 404) {
+    return null;
+  }
+
+  return handleResponse(response);
 }
 
+/* =========================================================
+   1. HISTORICAL SENSOR READINGS
+   GET /api/readings/history
+   ========================================================= */
+
+export async function getReadingHistory() {
+  return authenticatedRequest("/api/readings/history");
+}
+
+/* =========================================================
+   2. SENSOR THRESHOLDS
+   GET /api/settings/thresholds
+   ========================================================= */
+
+export async function getThresholds() {
+  return authenticatedRequest("/api/settings/thresholds");
+}
 
 /* =========================================================
    3. USER LOGIN
+   POST /api/auth/login
+
+   Login is public, so it does not use authenticatedRequest.
    ========================================================= */
 
-// Flask endpoint:
-// POST /api/auth/login
-//
-// Saves the returned token for authenticated requests.
-
 export async function login(username, password) {
-
   const response = await fetch(
     `${API_BASE_URL}/api/auth/login`,
     {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
       },
-
-      body: JSON.stringify({
-        username,
-        password,
-      }),
+      body: JSON.stringify({ username, password }),
     }
   );
 
   const data = await handleResponse(response);
 
-  // Save authentication token.
   if (data.token) {
-
     localStorage.setItem("token", data.token);
-
   }
 
-  // Save user information.
   if (data.user) {
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify(data.user)
-    );
-
+    localStorage.setItem("user", JSON.stringify(data.user));
   }
 
   return data;
-
 }
 
-
 /* =========================================================
-   4. LOGOUT
+   4. LATEST LIVE SENSOR READING
+   GET /api/readings/latest
    ========================================================= */
-
-// Remove authentication information.
-
-export function logout() {
-
-  localStorage.removeItem("token");
-
-  localStorage.removeItem("user");
-
-}
-
-
-/* =========================================================
-   GET LATEST LIVE SENSOR READING
-   ========================================================= */
-
-// Flask endpoint:
-// GET /api/readings/latest
-//
-// Returns the most recent reading from the LiveReading table.
-// Returns null if the backend has no live reading yet.
 
 export async function getLatestReading() {
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/readings/latest`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
+  return authenticatedRequest(
+    "/api/readings/latest",
+    {},
+    { notFoundAsNull: true }
   );
-
-  // HTTP 404 means the sensor has not sent any data yet.
-  if (response.status === 404) {
-    return null;
-  }
-
-  return await handleResponse(response);
 }
 
-
 /* =========================================================
-   GET ALERT INCIDENTS
+   5. ALERT INCIDENTS
+   GET /api/alerts
    ========================================================= */
 
-// Flask endpoint:
-// GET /api/alerts
-//
-// Retrieves incident records, including affected parameters,
-// severity, acknowledgment, and recovery information.
-
-export async function getAlerts({ startDate = "", endDate = "" } = {}) {
+export async function getAlerts({
+  startDate = "",
+  endDate = "",
+} = {}) {
   const params = new URLSearchParams();
 
   if (startDate && endDate) {
@@ -228,15 +172,7 @@ export async function getAlerts({ startDate = "", endDate = "" } = {}) {
     params.set("period", "7days");
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/alerts?${params.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
+  return authenticatedRequest(
+    `/api/alerts?${params.toString()}`
   );
-
-  return await handleResponse(response);
 }

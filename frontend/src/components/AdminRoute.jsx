@@ -1,15 +1,15 @@
 
 import { Navigate } from "react-router-dom";
-import { getCurrentUser } from "../services/auth";
+import { isAuthenticated, getCurrentUser } from "../services/auth";
 
 function AdminRoute({ children }) {
-  const user = getCurrentUser();
-
-  if (!user) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== "admin") {
+  const user = getCurrentUser();
+
+  if (!user || user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 

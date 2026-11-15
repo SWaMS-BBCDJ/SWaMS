@@ -15,7 +15,7 @@ function Login() {
 
   // Redirect if already authenticated
   if (isAuthenticated()) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleSubmit(event) {
@@ -26,7 +26,7 @@ function Login() {
     try {
       await login(username, password);
 
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
