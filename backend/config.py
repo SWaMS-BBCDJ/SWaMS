@@ -1,20 +1,21 @@
-
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
-    SQLALCHEMY_DATABASE_URI = (
-        "sqlite:///" + os.path.join(
-            BASE_DIR, "instance", "swams.db"
-        )
-    )
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    DEVICE_API_KEY = os.getenv("DEVICE_API_KEY", "change-me")
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "connect_args": {
+            "sslmode": "require"
+        }
+    }
+
+    DEVICE_API_KEY = os.getenv("DEVICE_API_KEY")
