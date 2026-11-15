@@ -1,6 +1,8 @@
 // src/services/auth.js
 
-const API_URL = "http://localhost:5000/api"; // change to your backend URL
+const API_URL = `${(
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"
+).replace(/\/+$/, "")}/api`;
 
 export async function login(username, password) {
   const res = await fetch(`${API_URL}/auth/login`, {

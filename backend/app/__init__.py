@@ -1,14 +1,19 @@
 
 from flask import Flask
+import os
+from dotenv import load_dotenv
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from zoneinfo import ZoneInfo
 
-db = SQLAlchemy()
+load_dotenv()
 
+db = SQLAlchemy()
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 _scheduler = None
+
 
 
 def create_app(config_class="config.Config"):
@@ -16,7 +21,7 @@ def create_app(config_class="config.Config"):
 
     app = Flask(__name__)
     app.config.from_object(config_class)
-    CORS(app, origins=["http://localhost:5173"])
+    CORS(app, origins=[frontend_url])
     db.init_app(app)
 
     
