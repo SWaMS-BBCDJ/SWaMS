@@ -56,7 +56,7 @@ class Threshold(db.Model):
 class AlertLog(db.Model):
     __tablename__ = "alert_logs"
     id = db.Column(db.Integer, primary_key=True)
-    reading_id = db.Column(db.Integer, db.ForeignKey("readings.id"))
+    reading_id = db.Column(db.Integer, db.ForeignKey("hourly_readings.id"))
     parameter = db.Column(db.String(20))
     value = db.Column(db.Float)
     message = db.Column(db.String(255))
