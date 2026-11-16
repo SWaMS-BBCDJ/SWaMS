@@ -974,6 +974,8 @@ def get_next_sms_command():
 
 
 @main.post("/api/device/sms-commands/<int:command_id>/result")
+
+@main.post("/api/device/sms-commands/<int:command_id>/result")
 def update_sms_command_result(command_id):
 
     key = request.headers.get("X-Device-Key")
@@ -986,14 +988,23 @@ def update_sms_command_result(command_id):
     if command is None:
         return jsonify(error="command not found"), 404
 
-    if command.status != "SENDING":
-        return jsonify(error="command is not awaiting a result"), 409
-
     data = request.get_json(silent=True) or {}
     result = str(data.get("status", "")).strip().upper()
 
     if result not in ("SENT", "FAILED"):
         return jsonify(error="status must be SENT or FAILED"), 400
+
+    # Accept repeated reports with the same result.
+    if command.status == result:
+        return jsonify(
+            message="SMS command result already recorded",
+            command_id=command.id,
+            status=command.status,
+        ), 200
+
+    # Reject conflicting results or commands in an unexpected state.
+    if command.status != "SENDING":
+        return jsonify(error="conflicting or invalid command result"), 409
 
     command.status = result
 
