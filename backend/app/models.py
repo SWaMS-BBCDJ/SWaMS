@@ -6,11 +6,11 @@ class Pond(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     location = db.Column(db.String(120), default="Claveria, Misamis Oriental")
-    readings = db.relationship("Reading", backref="pond", lazy=True)
+    hourly_readings = db.relationship("Reading", backref="pond", lazy=True)
 
 
 class Reading(db.Model):
-    __tablename__ = "readings"
+    __tablename__ = "hourly_readings"
 
     id = db.Column(db.Integer, primary_key=True)
 
