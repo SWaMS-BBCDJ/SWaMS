@@ -483,7 +483,7 @@ def ingest():
     # 1. SAVE INDIVIDUAL SENSOR READING
     # ==========================================
 
-    sensor_readings = SensorReadings(
+    sensor_readings = SensorReading(
         pond_id=pond.id,
         timestamp=measurement_time,
         ph=ph,
