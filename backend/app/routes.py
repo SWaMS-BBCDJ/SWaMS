@@ -25,7 +25,7 @@ from app.models import (
     LiveReading,
     Pond,
     Reading,
-    SensorReadings,
+    SensorReading,
     SMSCommand,
     Threshold,
 )
