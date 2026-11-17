@@ -83,7 +83,7 @@ class User(db.Model):
     
 
 
-class SensorReading(db.Model):
+class SensorReadings(db.Model):
     __tablename__ = "sensor_readings"
 
     id = db.Column(db.Integer, primary_key=True)
